@@ -1,10 +1,9 @@
 const { DatabaseInitialize } = require('./../DFUtil');
-const { Between } = require('./Expression');
-const { DB_SERVER_TYPE } = require('./../DFEnum');
 const DBType = require('./DBType');
 
 class Query {
     constructor(query, timeout) {
+        this._extra = '';
         this._query = query;
         this._parameterList = [];
         this._parameters = [];
@@ -15,6 +14,7 @@ class Query {
             or: this.or.bind(this),
             add: this.add.bind(this)
         };
+        this.orderBy = null;
     };
 
     and(expression) {
@@ -99,21 +99,19 @@ class Query {
             this._parameters.push(value);
         });
         return {
-            query: this._query,
+            query: `${this._query} ${this.orderBy ? 'ORDER BY ' + this.orderBy : ''}`,
             parameters: this._parameters
         };
     }
 
     execute() {
         return new Promise((resolve, reject) => {
-            const { Utility } = require('./../index');
             DatabaseInitialize((DatabaseConnection) => {
                 let queryInfo = this.getQuery()
-                //resolve({ query: queryInfo.query, parameters: queryInfo.parameters });
                 try {
                     DatabaseConnection.connect((err, ags) => {
                         if (!err) {
-                            DatabaseConnection.query(queryInfo.query, queryInfo.parameters, (error, results, fields) => {
+                            DatabaseConnection.query(`${queryInfo.query} ${this._extra}`, queryInfo.parameters, (error, results, fields) => {
                                 if (error) {
                                     throw new Error(error);
                                 }

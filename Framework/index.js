@@ -1,4 +1,5 @@
 const express = require('express');
+const app = express();
 const ControllerBase = require('./ControllerBase');
 const Database = require('./Database');
 const Filter = require('./Filter');
@@ -8,28 +9,49 @@ const RouteBase = require('./RouteBase');
 const http = require('http');
 const multer = require('multer');
 const bodyparser = require('body-parser');
-const exceptionHandler = require('./Exception/ExceptionHandler');
+const ExceptionHandler = require('./Exception/ExceptionHandler');
+const cookieSession = require('cookie-session');
+const cookieParser = require('cookie-parser');
+const defaultCtrl = require('./DefaultController');
 
 class Route extends RouteBase {
     constructor(app, routes) {
         super(app);
 
-        Object.keys(routes).forEach(element => {
+        let ctrls = Object.keys(routes);
+        ctrls.forEach(element => {
             this[element] = routes[element];
+        });
+
+        //Default controller it can be override
+        Object.keys(defaultCtrl).forEach(element => {
+            if (!(ctrls.indexOf(element) > -1)) {
+                this[element] = defaultCtrl[element];
+            }
         });
     }
 }
 
 let Framework = {
+    config: null,
     ControllerBase: ControllerBase,
     Database: Database,
     Filter: Filter,
     Utility: Utility,
     BusinessBase: BusinessBase,
+    Authorize: (req, userData) => {
+        let options = {
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            signed: true // Indicates if the cookie should be signed
+        }
+        req.session.user = userData;
+        req.sessionOptions = options;
+    },
     Initialize: (config, cb) => {
+        Framework.config = config;
         if (config.cors) {
             //Access Control Allow
-            config.app.use(function (req, res, next) {
+            app.use(function (req, res, next) {
                 let origin = req.headers.origin;
                 res.header("Access-Control-Allow-Origin", origin);
                 res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
@@ -38,28 +60,43 @@ let Framework = {
                 next();
             });
         }
-        config.app.use(express.static(config.staticPath));
+        app.use(express.static(config.staticPath));
         let upload = multer();
         if (config.multerOptions) {
             upload = multer(config.multerOptions);
         }
-        config.app.use(upload.any());
+        app.use(upload.any());
+        app.use(cookieParser(config.session.name || config.appName));
+
+        //Session Initialization
+        app.use(cookieSession({
+            name: config.session.name || config.appName,
+            keys: config.session.keys,
+            secret: config.session.name || config.appName,
+            // Cookie Options
+            maxAge: config.session.maxAge || 24 * 60 * 60 * 1000, // 24 hours
+            path: "/"
+        }));
 
         //Body Parser
-        config.app.use(bodyparser.json({ limit: '100mb', extended: true }));
-        config.app.use(bodyparser.urlencoded({ limit: '100mb', extended: true, parameterLimit: 1000000 }));
+        app.use(bodyparser.json({ limit: '100mb', extended: true }));
+        app.use(bodyparser.urlencoded({ limit: '100mb', extended: true, parameterLimit: 1000000 }));
 
-        exceptionHandler._app = config.app;
+        let route = new Route(app, config.controllers || {});
+        route.apiPrefix = config.apiPrefix || null
+        route.init();
+
+        //ExceptionHandler
+        let exceptionHandler = new ExceptionHandler();
+        exceptionHandler._app = app;
         exceptionHandler._callBack = config.exception;
         exceptionHandler.init();
 
-        const server = http.createServer(config.app);
+        const server = http.createServer(app);
         server.listen(config.port, function () {
-            console.log("Node app is running at localhost:" + config.port);
+            console.log("Application is running at localhost:" + config.port);
             global.dbConfig = config.dbConfig;
             global.dbType = config.dbType;
-            let route = new Route(config.app, config.controllers);
-            route.init();
             cb({ server: server });
         });
     }

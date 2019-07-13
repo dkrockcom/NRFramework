@@ -19,7 +19,8 @@ module.exports = {
         }
     },
     messages: {
-        INVALID_ACTION: 'Invalid action.'
+        INVALID_ACTION: 'Invalid action.',
+        AUTH_FAILED: 'Authentication failed'
     },
     DB_SERVER_TYPE: {
         MYSQL: 'MYSQL',

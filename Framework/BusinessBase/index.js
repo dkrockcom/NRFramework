@@ -10,34 +10,36 @@ class BusinessBase {
         this._keyField = this.constructor.KeyField || `${this.constructor.name}Id`;
     }
 
-    save(id, cb) {
+    save(id) {
         const { Query, Expression, DBType, ParameterInfo, CompareOperator } = Framework.Database;
         let properties = this.getProperties();
         let _query = '';
-        if (id) {
-            for (let index = 0; index < properties.length; index++) {
-                const prop = properties[index];
-                _query += `${index == 0 ? '' : ', '}${prop}=@${prop}`;
+        return new Promise((resolve, reject) => {
+            if (id) {
+                for (let index = 0; index < properties.length; index++) {
+                    const prop = properties[index];
+                    _query += `${index == 0 ? '' : ', '}${prop}=@${prop}`;
+                }
+                let query = new Query(`UPDATE ${this._tableName} SET ${_query}`);
+                this.setParameter(properties, query, ParameterInfo);
+                query.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
+                query.execute().then((resp) => {
+                    resolve(resp);
+                });
+            } else {
+                let _qField = '', _qValue = '';
+                for (let index = 0; index < properties.length; index++) {
+                    const prop = properties[index];
+                    _qField += `${index == 0 ? '' : ', '}${prop}`;
+                    _qValue += `${index == 0 ? '' : ', '}@${prop}`;
+                }
+                let query = new Query(`INSERT INTO ${this._tableName} (${_qField}) VALUES (${_qValue})`);
+                this.setParameter(properties, query, ParameterInfo);
+                query.execute().then((resp) => {
+                    resolve(resp);
+                });
             }
-            let query = new Query(`UPDATE ${this._tableName} SET ${_query}`);
-            this.setParameter(properties, query, ParameterInfo);
-            query.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
-            query.execute().then((resp) => {
-                cb && cb(resp);
-            });
-        } else {
-            let _qField = '', _qValue = '';
-            for (let index = 0; index < properties.length; index++) {
-                const prop = properties[index];
-                _qField += `${index == 0 ? '' : ', '}${prop}`;
-                _qValue += `${index == 0 ? '' : ', '}@${prop}`;
-            }
-            let query = new Query(`INSERT INTO ${this._tableName} (${_qField}) VALUES (${_qValue})`);
-            this.setParameter(properties, query, ParameterInfo);
-            query.execute().then((resp) => {
-                cb && cb(resp);
-            });
-        }
+        });
     }
 
     setParameter(properties, query, ParameterInfo) {
@@ -46,26 +48,31 @@ class BusinessBase {
         }.bind(this));
     }
 
-    load(id, cb) {
-        const { Query, Expression, DBType, ParameterInfo, CompareOperator } = Framework.Database;
-        let query = new Query(`SELECT * FROM ${this._tableName}`);
-        query.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
-        query.execute().then((resp) => {
-            let properties = this.getProperties();
-            let record = resp.results[0];
-            properties.forEach(key => {
-                this[key].value = record[key];
+    load(id) {
+        return new Promise((resolve, reject) => {
+            const { Query, Expression, DBType, CompareOperator } = Framework.Database;
+            let query = new Query(`SELECT * FROM ${this._tableName}`);
+            query.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
+            query.execute().then((resp) => {
+                let properties = this.getProperties();
+                let record = resp.results[0];
+                properties.forEach(key => {
+                    this[key].value = record[key];
+                });
+                this.Id = record[this._keyField];
+                resolve(record);
             });
-            cb && cb(record);
         });
     }
 
-    delete(id, cb) {
+    delete(id) {
         const { Query, Expression, DBType, CompareOperator } = Framework.Database;
-        let query = new Query(`DELETE FROM ${this._tableName}`);
-        query.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
-        query.execute().then((resp) => {
-            cb && cb(resp);
+        return new Promise((resolve, reject) => {
+            let query = new Query(`DELETE FROM ${this._tableName}`);
+            query.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
+            query.execute().then((resp) => {
+                resolve(resp);
+            });
         });
     }
 

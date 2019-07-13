@@ -1,4 +1,6 @@
 const { controller, messages } = require('./DFEnum');
+const Database = require('./Database');
+const Filter = require('./Filter');
 
 class ControllerBase {
     constructor() {
@@ -10,8 +12,8 @@ class ControllerBase {
         this._listDataFromTable = false;
 
         this._action;
-        this._startIndex = 0;
-        this._limit = 10;
+        this._start = 0;
+        this._limit = 50;
         this._filters = [];
         this._sort = null;
         this._dir = null;
@@ -22,14 +24,14 @@ class ControllerBase {
         this._req = null;
         this._res = null;
 
-        this.Framework = require('./../Framework');
+        this._comboRequests = [];
     }
 
     init(req, res) {
         let params = Object.assign({}, req.body, req.params, req.query);
 
         this._action = params.action || '';
-        this._startIndex = params.startIndex || 0;
+        this._start = params.start || 0;
         this._limit = params.limit || 10;
         this._filters = params.filters || [];
         this._sort = params.sort;
@@ -39,7 +41,11 @@ class ControllerBase {
         this._params = params.data || {};
         this._req = req;
         this._res = res;
-
+        //Authentication check
+        if (this._isAuthEnabled && !req.session.user) {
+            this.response(false, messages.AUTH_FAILED);
+            return;
+        }
         this.execute();
     }
 
@@ -90,8 +96,10 @@ class ControllerBase {
                 break;
 
             case controller.action.LOAD:
-                this._context.load(this._id, (resp) => {
-                    this.response(true, 'Record Loaded', resp);
+                this.getCombos((comboData) => {
+                    this._context.load(this._id, (resp) => {
+                        this.response(true, 'Record Loaded', { data: resp, combos: comboData });
+                    });
                 });
                 break;
 
@@ -102,11 +110,20 @@ class ControllerBase {
                 break;
 
             case controller.action.LIST:
-                const { Filter, Database } = Framework;
                 let query = new Database.Query(`SELECT * FROM ${this.getTableName()}`);
                 new Filter(this._filters, query).apply();
-                query.execute().then((resp) => {
-                    this.response(true, null, { records: resp.results });
+                this.uiFilter && this.uiFilter(this._filters, query);
+                if (this._sort && this._dir) {
+                    query.orderBy = `${this._sort} ${this._dir}`;
+                }
+                query._extra = `LIMIT ${this._limit} OFFSET ${this._start}`;
+                this.getCombos((comboData) => {
+                    query.execute().then((resp) => {
+                        this.response(true, null, {
+                            records: resp.results,
+                            combos: comboData
+                        });
+                    });
                 });
                 break;
 
@@ -120,8 +137,47 @@ class ControllerBase {
         return this._listDataFromTable ? this._tableName : this._viewName;
     }
 
-    filter() {
+    getCombos(cb) {
+        let combos = {};
+        if (this._combos.length > 0) {
+            let lookupQuery = new Database.Query(`SELECT LookupTypeId FROM LookupType`);
+            lookupQuery.where.add(new Database.In("DisplayValue", this._combos, Database.DBType.string));
+            lookupQuery.execute().then((resp) => {
+                if (resp.results.length == 0) {
+                    cb(combos);
+                    return;
+                }
 
+                resp.results.forEach(item => {
+                    this._comboRequests.push(this.getComboData(item.LookupTypeId).execute());
+                });
+
+                if (this._comboRequests.length > 0) {
+                    Promise.all(this._comboRequests).then(function (resp) {
+                        resp.forEach(item => {
+                            combos = Object.assign({}, combos, item.results.reduce(function (r, a) {
+                                r[a.ComboType] = r[a.ComboType] || [];
+                                r[a.ComboType].push(a);
+                                return r;
+                            }, Object.create(null)));
+                        });
+                        cb(combos);
+                    }.bind(this));
+                } else {
+                    cb(combos);
+                }
+            });
+        } else {
+            cb(combos);
+            return;
+        }
+    }
+
+    getComboData(LookupTypeId) {
+        let query = new Database.Query(`SELECT Lookup.LookupId, Lookup.DisplayValue, LookupType.DisplayValue ComboType FROM LookupType LEFT OUTER JOIN Lookup ON Lookup.LookupTypeId = LookupType.LookupTypeId`);
+        query.where.and(new Database.Expression("LookupType.LookupTypeId", Database.CompareOperator.Equals, LookupTypeId, Database.DBType.int));
+        query.orderBy = "Lookup.DisplayValue";
+        return query;
     }
 
     response(status, message, data) {
