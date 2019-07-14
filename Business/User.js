@@ -11,12 +11,6 @@ class User extends Framework.BusinessBase {
         this.Email = { type: DBType.string, value: null };
         this.DOB = { type: DBType.date, value: null };
         this.Address = { type: DBType.string, value: null };
-
-        //Default fields
-        this.CreatedBy = { type: DBType.string, value: null };
-        this.CreatedOn = { type: DBType.string, value: null };
-        this.ModifiedBy = { type: DBType.string, value: null };
-        this.ModifiedOn = { type: DBType.string, value: null };
     }
 }
 module.exports = User;

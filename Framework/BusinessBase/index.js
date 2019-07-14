@@ -1,4 +1,3 @@
-//const Framework = require('./../../Framework');
 const { DBType } = require('./../Database');
 
 const ignoreList = ["Id", "_tableName", "_keyField"];
@@ -8,9 +7,16 @@ class BusinessBase {
         this.Id = { type: DBType.int, value: null };
         this._tableName = this.constructor.TableName || this.constructor.name;
         this._keyField = this.constructor.KeyField || `${this.constructor.name}Id`;
+
+        //Default fields
+        this.CreatedBy = { type: DBType.string, value: null };
+        this.CreatedOn = { type: DBType.string, value: null };
+        this.ModifiedBy = { type: DBType.string, value: null };
+        this.ModifiedOn = { type: DBType.string, value: null };
     }
 
     save(id) {
+        const Framework = require('./../../Framework');
         const { Query, Expression, DBType, ParameterInfo, CompareOperator } = Framework.Database;
         let properties = this.getProperties();
         let _query = '';
@@ -50,6 +56,7 @@ class BusinessBase {
 
     load(id) {
         return new Promise((resolve, reject) => {
+            const Framework = require('./../../Framework');
             const { Query, Expression, DBType, CompareOperator } = Framework.Database;
             let query = new Query(`SELECT * FROM ${this._tableName}`);
             query.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
@@ -66,6 +73,7 @@ class BusinessBase {
     }
 
     delete(id) {
+        const Framework = require('./../../Framework');
         const { Query, Expression, DBType, CompareOperator } = Framework.Database;
         return new Promise((resolve, reject) => {
             let query = new Query(`DELETE FROM ${this._tableName}`);

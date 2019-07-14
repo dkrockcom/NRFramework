@@ -49,6 +49,10 @@ class ControllerBase {
         this.execute();
     }
 
+    getUserId() {
+        return req.session.user ? this._req.session.user.Id : null;
+    }
+
     setProperties(isUpdate) {
         let businessProps = this._context.getProperties();
         businessProps.forEach(bp => {
@@ -61,13 +65,13 @@ class ControllerBase {
             this._context[controller.defaultProperties.CREATED_ON].value = new Date();
         }
         if (this._context.hasOwnProperty(controller.defaultProperties.CREATED_BY) && !isUpdate) {
-            this._context[controller.defaultProperties.CREATED_BY].value = ''//TODO: Get Loagged user id form session.
+            this._context[controller.defaultProperties.CREATED_BY].value = this.getUserId();
         }
         if (this._context.hasOwnProperty(controller.defaultProperties.MODIFIED_ON) && isUpdate) {
             this._context[controller.defaultProperties.MODIFIED_ON].value = new Date();
         }
         if (this._context.hasOwnProperty(controller.defaultProperties.MODIFIED_BY) && isUpdate) {
-            this._context[controller.defaultProperties.MODIFIED_BY].value = ''//TODO: Get Loagged user id form session.
+            this._context[controller.defaultProperties.MODIFIED_BY].value = this.getUserId();
         }
     }
 
