@@ -23,6 +23,13 @@ let config = {
     exception: (error) => {
         console.log("----------------ERROR-LOGGER---------------");
     },
+    smtpConfig: {
+        host: '',
+        port: '',
+        secure: false,
+        user: '',
+        pass: ''
+    },
     controllers: { User, Test },
     multerOptions: null
 };

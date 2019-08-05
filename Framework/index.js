@@ -13,6 +13,7 @@ const ExceptionHandler = require('./Exception/ExceptionHandler');
 const cookieSession = require('cookie-session');
 const cookieParser = require('cookie-parser');
 const defaultCtrl = require('./DefaultController');
+const Mail = require('./Mail');
 
 class Route extends RouteBase {
     constructor(app, routes) {
@@ -33,6 +34,7 @@ class Route extends RouteBase {
 }
 
 let Framework = {
+    Mail: Mail,
     config: null,
     ControllerBase: ControllerBase,
     Database: Database,

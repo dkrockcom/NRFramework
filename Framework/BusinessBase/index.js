@@ -9,10 +9,10 @@ class BusinessBase {
         this._keyField = this.constructor.KeyField || `${this.constructor.name}Id`;
 
         //Default fields
-        this.CreatedBy = { type: DBType.string, value: null };
-        this.CreatedOn = { type: DBType.string, value: null };
-        this.ModifiedBy = { type: DBType.string, value: null };
-        this.ModifiedOn = { type: DBType.string, value: null };
+        this.CreatedBy = { type: DBType.int, value: null };
+        this.CreatedOn = { type: DBType.date, value: null };
+        this.ModifiedBy = { type: DBType.int, value: null };
+        this.ModifiedOn = { type: DBType.date, value: null };
     }
 
     save(id) {
@@ -61,13 +61,25 @@ class BusinessBase {
             let query = new Query(`SELECT * FROM ${this._tableName}`);
             query.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
             query.execute().then((resp) => {
-                let properties = this.getProperties();
-                let record = resp.results[0];
-                properties.forEach(key => {
-                    this[key].value = record[key];
-                });
-                this.Id = record[this._keyField];
-                resolve(record);
+                let record = {}, success = false, message = '';
+                try {
+                    if (resp.results.length > 0) {
+                        let properties = this.getProperties();
+                        record = resp.results[0];
+                        properties.forEach(key => {
+                            this[key].value = record[key];
+                        });
+                        this.Id = record[this._keyField];
+                        record.Id = this.Id;
+                        message = 'Record Loaded';
+                        success = true;
+                    } else {
+                        message = "Record not exists";
+                    }
+                    resolve({ success: success, record: record, message: message });
+                } catch (ex) {
+                    resolve({ success: success, record: record, message: ex.message });
+                }
             });
         });
     }

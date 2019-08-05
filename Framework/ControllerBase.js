@@ -12,8 +12,8 @@ class ControllerBase {
         this._listDataFromTable = false;
 
         this._action;
-        this._start = 0;
-        this._limit = 50;
+        this._start = null;
+        this._limit = null;
         this._filters = [];
         this._sort = null;
         this._dir = null;
@@ -31,14 +31,14 @@ class ControllerBase {
         let params = Object.assign({}, req.body, req.params, req.query);
 
         this._action = params.action || '';
-        this._start = params.start || 0;
-        this._limit = params.limit || 10;
-        this._filters = params.filters || [];
+        this._start = params.start;
+        this._limit = params.limit;
+        this._filters = params.filters && typeof (params.filters) === 'string' ? JSON.parse(params.filters) : params.filters || [];
         this._sort = params.sort;
         this._dir = params.dir;
         this._combos = params.combos || [];
         this._id = params.id;
-        this._params = params.data || {};
+        this._params = params.data || params || {};
         this._req = req;
         this._res = res;
         //Authentication check
@@ -50,13 +50,15 @@ class ControllerBase {
     }
 
     getUserId() {
-        return req.session.user ? this._req.session.user.Id : null;
+        return this._req.session.user ? this._req.session.user.Id : null;
     }
 
     setProperties(isUpdate) {
         let businessProps = this._context.getProperties();
         businessProps.forEach(bp => {
-            this._context[bp].value = this._params[bp];
+            if (this._params[bp]) {
+                this._context[bp].value = this._params[bp];
+            }
         });
 
         const { controller } = require('./DFEnum');
@@ -85,15 +87,15 @@ class ControllerBase {
                 }
                 if (this._id) {
                     isUpdate = true;
-                    this._context.load(this._id, () => {
+                    this._context.load(this._id).then((loadResp) => {
                         this.setProperties(isUpdate);
-                        this._context.save(this._id, (resp) => {
+                        this._context.save(this._id).then((resp) => {
                             this.response(true, 'Record sucessfully updated.', this._context);
                         });
                     });
                 } else {
                     this.setProperties(isUpdate);
-                    this._context.save(this._id, (resp) => {
+                    this._context.save(this._id).then((resp) => {
                         this.response(true, 'Record successfully created.', this._context);
                     });
                 }
@@ -101,14 +103,14 @@ class ControllerBase {
 
             case controller.action.LOAD:
                 this.getCombos((comboData) => {
-                    this._context.load(this._id, (resp) => {
-                        this.response(true, 'Record Loaded', { data: resp, combos: comboData });
+                    this._context.load(this._id).then((resp) => {
+                        this.response(resp.success, resp.message, { data: resp.record, combos: comboData });
                     });
                 });
                 break;
 
             case controller.action.DELETE:
-                this._context.delete(this._id, (resp) => {
+                this._context.delete(this._id).then((resp) => {
                     this.response(true, 'Record deleted', resp);
                 });
                 break;
@@ -119,15 +121,36 @@ class ControllerBase {
                 this.uiFilter && this.uiFilter(this._filters, query);
                 if (this._sort && this._dir) {
                     query.orderBy = `${this._sort} ${this._dir}`;
+                } else {
+                    query.orderBy = `${this.constructor.name}Id DESC`;
                 }
-                query._extra = `LIMIT ${this._limit} OFFSET ${this._start}`;
                 this.getCombos((comboData) => {
-                    query.execute().then((resp) => {
-                        this.response(true, null, {
-                            records: resp.results,
-                            combos: comboData
+                    let extras = `LIMIT ${this._limit || 50} OFFSET ${this._start || 0}`;
+                    query._extra = extras;
+                    if (this._start !== null && this._limit !== null) {
+                        query._extra = '';
+                        query.execute().then((resp) => {
+                            let recordCount = resp.results.length;
+                            query._extra = extras;
+                            query.execute().then((resp) => {
+                                this.response(true, null, {
+                                    records: resp.results,
+                                    combos: comboData,
+                                    recordCount: recordCount
+                                });
+                            });
+
                         });
-                    });
+                    } else {
+                        query._extra = '';
+                        query.execute().then((resp) => {
+                            this.response(true, null, {
+                                records: resp.results,
+                                combos: comboData,
+                                recordCount: resp.results.length
+                            });
+                        });
+                    }
                 });
                 break;
 

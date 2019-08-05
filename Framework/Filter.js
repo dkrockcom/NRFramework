@@ -8,7 +8,7 @@ class Filter {
 
     apply() {
         this._filters.forEach(filter => {
-            let isFirst = this._query.indexOf('WHERE') == -1;
+            let isFirst = this._query._query.indexOf('WHERE') == -1;
             switch (filter.type) {
                 case DBType.int:
                 case DBType.decimal:
