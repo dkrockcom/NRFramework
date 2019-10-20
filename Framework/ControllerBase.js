@@ -36,7 +36,7 @@ class ControllerBase {
         this._filters = params.filters && typeof (params.filters) === 'string' ? JSON.parse(params.filters) : params.filters || [];
         this._sort = params.sort;
         this._dir = params.dir;
-        this._combos = params.combos || [];
+        this._combos = params.combos && typeof (params.combos) === 'string' ? JSON.parse(params.combos) : params.combos || [];
         this._id = params.id;
         this._params = params.data || params || {};
         this._req = req;
@@ -77,7 +77,8 @@ class ControllerBase {
         }
     }
 
-    execute() {
+    async execute() {
+        let comboData = {};
         switch (this._action.toUpperCase()) {
             case controller.action.SAVE:
                 let isUpdate = false;
@@ -87,35 +88,44 @@ class ControllerBase {
                 }
                 if (this._id) {
                     isUpdate = true;
-                    this._context.load(this._id).then((loadResp) => {
-                        this.setProperties(isUpdate);
-                        this._context.save(this._id).then((resp) => {
-                            this.response(true, 'Record sucessfully updated.', this._context);
-                        });
-                    });
+                    await this._context.load(this._id);
+                    this.setProperties(isUpdate);
+                    await this._context.save(this._id);
+                    this.response(true, 'Record sucessfully updated.', this._context);
+
                 } else {
                     this.setProperties(isUpdate);
-                    this._context.save(this._id).then((resp) => {
-                        this.response(true, 'Record successfully created.', this._context);
-                    });
+                    await this._context.save();
+                    this.response(true, 'Record successfully created.', this._context);
                 }
                 break;
 
             case controller.action.LOAD:
-                this.getCombos((comboData) => {
-                    this._context.load(this._id).then((resp) => {
-                        this.response(resp.success, resp.message, { data: resp.record, combos: comboData });
+                comboData = await this.getCombos();
+                let checkRecord = new Database.Query(`SELECT ${this._context._keyField} FROM ${this._context._tableName}`);
+                checkRecord.where.add(new Database.Expression(this._context._keyField, Database.CompareOperator.Equals, this._id, Database.DBType.int));
+                let obj = await checkRecord.execute();
+                if (obj.length > 0) {
+                    await this._context.load(this._id);
+                    let record = {};
+                    let businessProps = this._context.getProperties();
+                    businessProps.forEach(field => {
+                        record[field] = this._context[field].value;
                     });
-                });
+                    record[this._context._keyField] = record["Id"] = this._context.Id.value;
+                    this.response(true, "Record Loaded", { data: record, combos: comboData });
+                } else {
+                    this.response(false, "Record not exists");
+                }
                 break;
 
             case controller.action.DELETE:
-                this._context.delete(this._id).then((resp) => {
-                    this.response(true, 'Record deleted', resp);
-                });
+                await this._context.delete(this._id);
+                this.response(true, 'Record deleted');
                 break;
 
             case controller.action.LIST:
+                let records = [];
                 let query = new Database.Query(`SELECT * FROM ${this.getTableName()}`);
                 new Filter(this._filters, query).apply();
                 this.uiFilter && this.uiFilter(this._filters, query);
@@ -124,34 +134,30 @@ class ControllerBase {
                 } else {
                     query.orderBy = `${this.constructor.name}Id DESC`;
                 }
-                this.getCombos((comboData) => {
-                    let extras = `LIMIT ${this._limit || 50} OFFSET ${this._start || 0}`;
-                    query._extra = extras;
-                    if (this._start !== null && this._limit !== null) {
-                        query._extra = '';
-                        query.execute().then((resp) => {
-                            let recordCount = resp.results.length;
-                            query._extra = extras;
-                            query.execute().then((resp) => {
-                                this.response(true, null, {
-                                    records: resp.results,
-                                    combos: comboData,
-                                    recordCount: recordCount
-                                });
-                            });
+                comboData = await this.getCombos();
+                let extras = `LIMIT ${this._limit || 50} OFFSET ${this._start || 0}`;
+                query._extra = extras;
+                if (this._start !== null && this._limit !== null) {
+                    query._extra = '';
+                    records = await query.execute();
 
-                        });
-                    } else {
-                        query._extra = '';
-                        query.execute().then((resp) => {
-                            this.response(true, null, {
-                                records: resp.results,
-                                combos: comboData,
-                                recordCount: resp.results.length
-                            });
-                        });
-                    }
-                });
+                    let recordCount = records.length;
+                    query._extra = extras;
+                    records = await query.execute();
+                    this.response(true, null, {
+                        records: records,
+                        combos: comboData,
+                        recordCount: recordCount
+                    });
+                } else {
+                    query._extra = '';
+                    records = await query.execute();
+                    this.response(true, null, {
+                        records: records,
+                        combos: comboData,
+                        recordCount: records.length
+                    });
+                }
                 break;
 
             default:
@@ -164,47 +170,32 @@ class ControllerBase {
         return this._listDataFromTable ? this._tableName : this._viewName;
     }
 
-    getCombos(cb) {
+    async getCombos(cb) {
         let combos = {};
-        if (this._combos.length > 0) {
-            let lookupQuery = new Database.Query(`SELECT LookupTypeId FROM LookupType`);
-            lookupQuery.where.add(new Database.In("DisplayValue", this._combos, Database.DBType.string));
-            lookupQuery.execute().then((resp) => {
-                if (resp.results.length == 0) {
-                    cb(combos);
-                    return;
-                }
+        if (this._combos.length == 0)
+            return combos;
 
-                resp.results.forEach(item => {
-                    this._comboRequests.push(this.getComboData(item.LookupTypeId).execute());
-                });
+        let lookupQuery = new Database.Query(`SELECT LookupTypeId, LookupType FROM LookupType`);
+        lookupQuery.where.add(new Database.In("LookupType", this._combos, Database.DBType.string));
+        let results = await lookupQuery.execute();
 
-                if (this._comboRequests.length > 0) {
-                    Promise.all(this._comboRequests).then(function (resp) {
-                        resp.forEach(item => {
-                            combos = Object.assign({}, combos, item.results.reduce(function (r, a) {
-                                r[a.ComboType] = r[a.ComboType] || [];
-                                r[a.ComboType].push(a);
-                                return r;
-                            }, Object.create(null)));
-                        });
-                        cb(combos);
-                    }.bind(this));
-                } else {
-                    cb(combos);
-                }
-            });
-        } else {
-            cb(combos);
-            return;
+        if (results.length == 0) {
+            return combos;
         }
+
+        for (let index = 0; index < results.length; index++) {
+            const item = results[index];
+            let comboData = await this.getComboData(item.LookupTypeId);
+            combos[item.LookupType] = comboData;
+        }
+        return combos;
     }
 
-    getComboData(LookupTypeId) {
-        let query = new Database.Query(`SELECT Lookup.LookupId, Lookup.DisplayValue, LookupType.DisplayValue ComboType FROM LookupType LEFT OUTER JOIN Lookup ON Lookup.LookupTypeId = LookupType.LookupTypeId`);
-        query.where.and(new Database.Expression("LookupType.LookupTypeId", Database.CompareOperator.Equals, LookupTypeId, Database.DBType.int));
-        query.orderBy = "Lookup.DisplayValue";
-        return query;
+    async getComboData(LookupTypeId) {
+        let query = new Database.Query(`SELECT LookupId, DisplayValue FROM Lookup`);
+        query.where.and(new Database.Expression("LookupTypeId", Database.CompareOperator.Equals, LookupTypeId, Database.DBType.int));
+        query.orderBy = "SortOrder";
+        return await query.execute();
     }
 
     response(status, message, data) {

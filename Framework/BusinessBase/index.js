@@ -9,43 +9,46 @@ class BusinessBase {
         this._keyField = this.constructor.KeyField || `${this.constructor.name}Id`;
 
         //Default fields
-        this.CreatedBy = { type: DBType.int, value: null };
-        this.CreatedOn = { type: DBType.date, value: null };
+        this.CreatedBy = { type: DBType.int, value: 0 };
+        this.CreatedOn = { type: DBType.date, value: new Date() };
         this.ModifiedBy = { type: DBType.int, value: null };
         this.ModifiedOn = { type: DBType.date, value: null };
     }
 
-    save(id) {
+    async save(id) {
         const Framework = require('./../../Framework');
         const { Query, Expression, DBType, ParameterInfo, CompareOperator } = Framework.Database;
         let properties = this.getProperties();
         let _query = '';
-        return new Promise((resolve, reject) => {
-            if (id) {
-                for (let index = 0; index < properties.length; index++) {
-                    const prop = properties[index];
-                    _query += `${index == 0 ? '' : ', '}${prop}=@${prop}`;
-                }
+        if (id) {
+            for (let index = 0; index < properties.length; index++) {
+                const prop = properties[index];
+                _query += `${index == 0 ? '' : ', '}${prop}=@${prop}`;
+            }
+            let checkRecord = new Query(`SELECT ${this._keyField} FROM ${this._tableName}`);
+            checkRecord.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
+            let obj = await checkRecord.execute();
+            if (obj.length > 0) {
                 let query = new Query(`UPDATE ${this._tableName} SET ${_query}`);
                 this.setParameter(properties, query, ParameterInfo);
                 query.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
-                query.execute().then((resp) => {
-                    resolve(resp);
-                });
+                await query.execute();
+                await this.load(id);
             } else {
-                let _qField = '', _qValue = '';
-                for (let index = 0; index < properties.length; index++) {
-                    const prop = properties[index];
-                    _qField += `${index == 0 ? '' : ', '}${prop}`;
-                    _qValue += `${index == 0 ? '' : ', '}@${prop}`;
-                }
-                let query = new Query(`INSERT INTO ${this._tableName} (${_qField}) VALUES (${_qValue})`);
-                this.setParameter(properties, query, ParameterInfo);
-                query.execute().then((resp) => {
-                    resolve(resp);
-                });
+                throw new Error("Record Not Exists");
             }
-        });
+        } else {
+            let _qField = '', _qValue = '';
+            for (let index = 0; index < properties.length; index++) {
+                const prop = properties[index];
+                _qField += `${index == 0 ? '' : ', '}${prop}`;
+                _qValue += `${index == 0 ? '' : ', '}@${prop}`;
+            }
+            let query = new Query(`INSERT INTO ${this._tableName} (${_qField}) VALUES (${_qValue})`);
+            this.setParameter(properties, query, ParameterInfo);
+            let obj = await query.execute();
+            await this.load(obj.insertId);
+        }
     }
 
     setParameter(properties, query, ParameterInfo) {
@@ -54,46 +57,30 @@ class BusinessBase {
         }.bind(this));
     }
 
-    load(id) {
-        return new Promise((resolve, reject) => {
-            const Framework = require('./../../Framework');
-            const { Query, Expression, DBType, CompareOperator } = Framework.Database;
-            let query = new Query(`SELECT * FROM ${this._tableName}`);
-            query.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
-            query.execute().then((resp) => {
-                let record = {}, success = false, message = '';
-                try {
-                    if (resp.results.length > 0) {
-                        let properties = this.getProperties();
-                        record = resp.results[0];
-                        properties.forEach(key => {
-                            this[key].value = record[key];
-                        });
-                        this.Id = record[this._keyField];
-                        record.Id = this.Id;
-                        message = 'Record Loaded';
-                        success = true;
-                    } else {
-                        message = "Record not exists";
-                    }
-                    resolve({ success: success, record: record, message: message });
-                } catch (ex) {
-                    resolve({ success: success, record: record, message: ex.message });
-                }
-            });
-        });
-    }
-
-    delete(id) {
+    async load(id) {
         const Framework = require('./../../Framework');
         const { Query, Expression, DBType, CompareOperator } = Framework.Database;
-        return new Promise((resolve, reject) => {
-            let query = new Query(`DELETE FROM ${this._tableName}`);
-            query.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
-            query.execute().then((resp) => {
-                resolve(resp);
+        let query = new Query(`SELECT * FROM ${this._tableName}`);
+        query.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
+        let obj = await query.execute();
+        if (obj && obj.length > 0) {
+            let properties = this.getProperties();
+            obj = obj[0];
+            await properties.forEach(key => {
+                this[key].value = obj[key];
             });
-        });
+            this.Id.value = obj[this._keyField];
+        } else {
+            throw new Error("Record Not Exists");
+        }
+    }
+
+    async delete(id) {
+        const Framework = require('./../../Framework');
+        const { Query, Expression, DBType, CompareOperator } = Framework.Database;
+        let query = new Query(`DELETE FROM ${this._tableName}`);
+        query.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
+        await query.execute();
     }
 
     list() {

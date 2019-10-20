@@ -5,8 +5,8 @@ class ExceptionHandler {
     }
 
     init() {
-        process.on('unhandledRejection', (err) => { throw err });
-        process.on('uncaughtException', (err) => { throw err });
+        process.on('unhandledRejection', (err) => { this._callBack && this._callBack(err); });
+        process.on('uncaughtException', (err) => { this._callBack && this._callBack(err); });
         this._app.use((err, req, res, next) => {
             this._callBack && this._callBack(err);
             res.json({ success: false, message: err.stack });

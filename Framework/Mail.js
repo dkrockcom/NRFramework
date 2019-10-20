@@ -8,8 +8,8 @@ class Mail {
         this.host = smtpConfigCustom && smtpConfigCustom.host || smtpConfig.host;
         this.port = smtpConfigCustom && smtpConfigCustom.port || smtpConfig.port;
         this.secure = smtpConfigCustom && smtpConfigCustom.secure || smtpConfig.secure;
-        this.user = smtpConfigCustom && smtpConfigCustom.user || smtpConfig.username;
-        this.pass = smtpConfigCustom && smtpConfigCustom.pass || smtpConfig.password;
+        this.username = smtpConfigCustom && smtpConfigCustom.user || smtpConfig.username;
+        this.password = smtpConfigCustom && smtpConfigCustom.pass || smtpConfig.password;
 
         this.transporter = nodemailer.createTransport({
             host: this.host,
@@ -23,18 +23,19 @@ class Mail {
     }
 
     resolveTags(text, tags) {
-        if (text) {
+        let value = text;
+        if (text && tags) {
             for (var o in tags) {
                 text = text.replace(new RegExp('{' + o + '}', 'g'), tags[o]);
             }
         }
-        return text
+        return value;
     }
 
-    send(mailOptions) {
-        mailOptions.html = this.resolveTags(mailOptions.template.Body, options.tags);
-        mailOptions.subject = this.resolveTags(mailOptions.template.Subject, options.tags);
-        return this.transporter.sendMail(mailOptions);
+    async send(mailOptions, tags) {
+        mailOptions.html = this.resolveTags(mailOptions.html, tags);
+        mailOptions.subject = this.resolveTags(mailOptions.subject, tags);
+        return await this.transporter.sendMail(mailOptions);
     }
 }
 module.exports = Mail;

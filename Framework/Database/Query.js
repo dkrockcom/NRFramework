@@ -1,4 +1,4 @@
-const { DatabaseInitialize } = require('./../DFUtil');
+const ConnectionPool = require('./ConnectionPool');
 const DBType = require('./DBType');
 
 class Query {
@@ -8,7 +8,7 @@ class Query {
         this._parameterList = [];
         this._parameters = [];
         this._timeout = timeout || 30000;
-        this._connection = null;
+        this._config = {};
         this.where = {
             and: this.and.bind(this),
             or: this.or.bind(this),
@@ -104,31 +104,10 @@ class Query {
         };
     }
 
-    execute() {
-        return new Promise((resolve, reject) => {
-            DatabaseInitialize((DatabaseConnection) => {
-                let queryInfo = this.getQuery()
-                try {
-                    DatabaseConnection.connect((err, ags) => {
-                        if (!err) {
-                            DatabaseConnection.query(`${queryInfo.query} ${this._extra}`, queryInfo.parameters, (error, results, fields) => {
-                                if (error) {
-                                    throw new Error(error);
-                                }
-                                DatabaseConnection.end();
-                                resolve({ results, fields });
-                            });
-                            return;
-                        }
-                        DatabaseConnection.end();
-                        throw new Error(err);
-                    });
-                } catch (ex) {
-                    DatabaseConnection.end();
-                    throw new Error(ex);
-                }
-            });
-        });
+    async execute() {
+        let queryInfo = this.getQuery();
+        return await ConnectionPool(Object.assign({}, global.dbConfig, this._config))
+            .query(`${queryInfo.query} ${this._extra}`, queryInfo.parameters);
     }
 }
 module.exports = Query;
