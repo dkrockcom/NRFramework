@@ -1,9 +1,7 @@
+const bcrypt = require('bcrypt');
+
 class Utility {
-    constructor() {
-        this._connection = null;
-    }
-    static get Connection() { return _connection; }
-    static set Connection(value) { return this._connection = value }
+    static get passwordHashRound() { return 8 };
     static toInt(value, defaultValue) {
         let val = null;
         try {
@@ -31,6 +29,18 @@ class Utility {
         }
         req.session.user = userData;
         req.sessionOptions = options;
+    }
+
+    static generateHash(password) {
+        return bcrypt.hashSync(password, this.passwordHashRound);
+    }
+
+    /**
+     * @param password Plan Text Passwod.
+     * @param hash The hash password which is stored in DB.
+     */
+    static passwordCheck(password, hash) {
+        return bcrypt.compareSync(password, hash);
     }
 }
 module.exports = Utility;
