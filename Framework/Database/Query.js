@@ -15,6 +15,7 @@ class Query {
             add: this.add.bind(this)
         };
         this.orderBy = null;
+        this.connectionPool = ConnectionPool(Object.assign({}, global.dbConfig, this._config));
     };
 
     and(expression) {
@@ -105,9 +106,14 @@ class Query {
     }
 
     async execute() {
-        let queryInfo = this.getQuery();
-        return await ConnectionPool(Object.assign({}, global.dbConfig, this._config))
-            .query(`${queryInfo.query} ${this._extra}`, queryInfo.parameters);
+        try {
+            let queryInfo = this.getQuery();
+            return await this.connectionPool.query(`${queryInfo.query} ${this._extra}`, queryInfo.parameters);
+        } catch (ex) {
+            throw new Error(ex);
+        } finally {
+            this.connectionPool.end();
+        }
     }
 }
 module.exports = Query;
