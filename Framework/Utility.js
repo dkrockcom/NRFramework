@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const fs = require("fs");
 
 class Utility {
     static get passwordHashRound() { return 8 };
@@ -41,6 +42,13 @@ class Utility {
      */
     static passwordCheck(password, hash) {
         return bcrypt.compareSync(password, hash);
+    }
+
+    /**
+     * @param pathFormRoot Directory Path from root.
+     */
+    static getDirectoryList(pathFormRoot) {
+        return fs.readdirSync(pathFormRoot, { withFileTypes: true }).filter(dirent => dirent.isDirectory()).map(dirent => dirent.name);
     }
 }
 module.exports = Utility;

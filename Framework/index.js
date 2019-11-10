@@ -15,6 +15,7 @@ const cookieParser = require('cookie-parser');
 const defaultCtrl = require('./DefaultController');
 const Mail = require('./Mail');
 const WebPage = require('./WebPage');
+const fs = require('fs-extra');
 
 class Route extends RouteBase {
     constructor(app, routes) {
@@ -90,15 +91,14 @@ let Framework = {
         route.init();
 
         app.set('view engine', 'ejs');
-        try {
-            let pages = require('./../Web/Pages');
-            Object.keys(pages).forEach(function (page) {
-                app.get("/" + page, new this[page]().pageLoad);
-            }.bind(pages));
-            app.get("/", (req, res, next) => res.redirect('Default'));
-
-        } catch (ex) {
-            console.log(ex);
+        if (fs.existsSync('./Web/Pages')) {
+            const dirList = Utility.getDirectoryList('./Web/Pages');
+            dirList.forEach(function (page) {
+                let pageClass = require(`./../Web/Pages/${page}`);
+                app.get("/" + page, new pageClass().pageLoad);
+            });
+            let defaultPageClass = require(`./../Web/Pages/Default`);
+            app.get("/", new defaultPageClass().pageLoad);
         }
 
         //Set static contents
