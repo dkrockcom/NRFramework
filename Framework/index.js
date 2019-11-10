@@ -14,6 +14,7 @@ const cookieSession = require('cookie-session');
 const cookieParser = require('cookie-parser');
 const defaultCtrl = require('./DefaultController');
 const Mail = require('./Mail');
+const WebPage = require('./WebPage');
 
 class Route extends RouteBase {
     constructor(app, routes) {
@@ -34,6 +35,7 @@ class Route extends RouteBase {
 }
 
 let Framework = {
+    WebPage: WebPage,
     Mail: Mail,
     config: null,
     ControllerBase: ControllerBase,
@@ -62,7 +64,6 @@ let Framework = {
                 next();
             });
         }
-        app.use(express.static(config.staticPath));
         let upload = multer();
         if (config.multerOptions) {
             upload = multer(config.multerOptions);
@@ -88,6 +89,20 @@ let Framework = {
         route.apiPrefix = config.apiPrefix || null
         route.init();
 
+        app.set('view engine', 'ejs');
+        try {
+            let pages = require('./../Web/Pages');
+            Object.keys(pages).forEach(function (page) {
+                app.get("/" + page, new this[page]().pageLoad);
+            }.bind(pages));
+            app.get("/", (req, res, next) => res.redirect('Default'));
+
+        } catch (ex) {
+            console.log(ex);
+        }
+
+        //Set static contents
+        app.use(express.static(config.staticPath));
         //ExceptionHandler
         let exceptionHandler = new ExceptionHandler();
         exceptionHandler._app = app;
