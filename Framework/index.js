@@ -95,10 +95,15 @@ let Framework = {
             const dirList = Utility.getDirectoryList('./Web/Pages');
             dirList.forEach(function (page) {
                 let pageClass = require(`./../Web/Pages/${page}`);
-                app.get("/" + page, new pageClass().pageLoad);
+                app.route("/" + page)
+                    .get(new pageClass().pageLoad)
+                    .post(new pageClass().pageLoad);
             });
             let defaultPageClass = require(`./../Web/Pages/Default`);
-            app.get("/", new defaultPageClass().pageLoad);
+            app.route("/")
+                .get(new defaultPageClass().pageLoad)
+                .post(new defaultPageClass().pageLoad);
+
         }
 
         //Set static contents

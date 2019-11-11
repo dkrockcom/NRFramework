@@ -6,7 +6,7 @@ class WebPage {
         if (this.isAuthEnabled && !req.session.user) {
             return res.redirect('Login');
         }
-        res.render('./../Web/Pages/' + this.constructor.name, { req, res, next, extra: this.extra || {} });
+        res.render('./../Web/Pages/' + this.constructor.name, { req, res, next, data: this.data || {} });
     }
 }
 module.exports = WebPage;
