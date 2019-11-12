@@ -1,12 +1,13 @@
 class WebPage {
     constructor() {
         this.pageLoad = this.pageLoad.bind(this);
+        this.route = "";
     }
     pageLoad(req, res, next) {
         if (this.isAuthEnabled && !req.session.user) {
             return res.redirect('Login');
         }
-        res.render('./../Web/Pages/' + this.constructor.name, { req, res, next, data: this.data || {} });
+        res.render(this.route, { req, res, next, data: this.data || {} });
     }
 }
 module.exports = WebPage;

@@ -15,7 +15,7 @@ const cookieParser = require('cookie-parser');
 const defaultCtrl = require('./DefaultController');
 const Mail = require('./Mail');
 const WebPage = require('./WebPage');
-const fs = require('fs-extra');
+const WebPageRoute = require('./WebPageRoute');
 
 class Route extends RouteBase {
     constructor(app, routes) {
@@ -86,25 +86,15 @@ let Framework = {
         app.use(bodyparser.json({ limit: '100mb', extended: true }));
         app.use(bodyparser.urlencoded({ limit: '100mb', extended: true, parameterLimit: 1000000 }));
 
+        config.onConfig && config.onConfig(app);
+
         let route = new Route(app, config.controllers || {});
         route.apiPrefix = config.apiPrefix || null
         route.init();
 
         app.set('view engine', 'ejs');
-        if (fs.existsSync('./Web/Pages')) {
-            const dirList = Utility.getDirectoryList('./Web/Pages');
-            dirList.forEach(function (page) {
-                let pageClass = require(`./../Web/Pages/${page}`);
-                app.route("/" + page)
-                    .get(new pageClass().pageLoad)
-                    .post(new pageClass().pageLoad);
-            });
-            let defaultPageClass = require(`./../Web/Pages/Default`);
-            app.route("/")
-                .get(new defaultPageClass().pageLoad)
-                .post(new defaultPageClass().pageLoad);
-
-        }
+        let wpr = new WebPageRoute(app);
+        wpr.setRoute();
 
         //Set static contents
         app.use(express.static(config.staticPath));

@@ -21,6 +21,9 @@ let config = {
         keys: ['dkrock'],
         maxAge: 24 * 60 * 60 * 1000 // 24 hours // 
     },
+    onConfig: (app) => {
+        //do Something
+    },
     exception: async (error) => {
         console.log("----------------ERROR-LOGGER---------------");
         console.log(error.stack);
