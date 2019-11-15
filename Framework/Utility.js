@@ -3,6 +3,12 @@ const fs = require("fs");
 
 class Utility {
     static get passwordHashRound() { return 8 };
+    /**
+     * @param {String} - Value which need to check.
+     */
+    static isNullOrEmpty(val) {
+        return val === "" || val === undefined || val === null;
+    }
     static toInt(value, defaultValue) {
         let val = null;
         try {
@@ -28,6 +34,7 @@ class Utility {
             maxAge: maxAge || 24 * 60 * 60 * 1000, // 24 hours
             signed: true // Indicates if the cookie should be signed
         }
+        req.session.isAuthenticated = true;
         req.session.user = userData;
         req.sessionOptions = options;
     }

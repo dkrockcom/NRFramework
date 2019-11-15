@@ -16,6 +16,7 @@ const defaultCtrl = require('./DefaultController');
 const Mail = require('./Mail');
 const WebPage = require('./WebPage');
 const WebPageRoute = require('./WebPageRoute');
+const LoginHelper = require('./LoginHelper');
 
 class Route extends RouteBase {
     constructor(app, routes) {
@@ -36,6 +37,7 @@ class Route extends RouteBase {
 }
 
 let Framework = {
+    LoginHelper: LoginHelper,
     WebPage: WebPage,
     Mail: Mail,
     config: null,

@@ -42,7 +42,7 @@ class ControllerBase {
         this._req = req;
         this._res = res;
         //Authentication check
-        if (this._isAuthEnabled && !req.session.user) {
+        if (this._isAuthEnabled && !req.session.isAuthenticated) {
             this.response(false, messages.AUTH_FAILED);
             return;
         }
