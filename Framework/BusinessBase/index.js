@@ -13,6 +13,7 @@ class BusinessBase {
         this.CreatedOn = { type: DBType.date, value: new Date() };
         this.ModifiedBy = { type: DBType.int, value: null };
         this.ModifiedOn = { type: DBType.date, value: null };
+        this.IsDeleted = { type: DBType.boolean, value: false };
     }
 
     async save(id) {

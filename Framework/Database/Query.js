@@ -2,13 +2,13 @@ const ConnectionPool = require('./ConnectionPool');
 const DBType = require('./DBType');
 
 class Query {
-    constructor(query, timeout) {
+    constructor(query, config = {}, timeout = 30000) {
         this._extra = '';
         this._query = query;
         this._parameterList = [];
         this._parameters = [];
-        this._timeout = timeout || 30000;
-        this._config = {};
+        this._timeout = timeout;
+        this._config = config;
         this.where = {
             and: this.and.bind(this),
             or: this.or.bind(this),

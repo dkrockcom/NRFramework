@@ -1,10 +1,12 @@
 const { controller, messages } = require('./DFEnum');
 const Database = require('./Database');
 const Filter = require('./Filter');
+const HttpContext = require('./HttpContext');
 
 class ControllerBase {
     constructor() {
         //Initializaed whrn create the onteollwr object form the useing routes.
+        this._requiredModule = null;
         this._isAuthEnabled = true;
         this._context = null;
         this._viewName = `vw${this.constructor.name}List`;
@@ -42,7 +44,8 @@ class ControllerBase {
         this._req = req;
         this._res = res;
         //Authentication check
-        if (this._isAuthEnabled && !req.session.isAuthenticated) {
+        if (this._isAuthEnabled && !HttpContext.IsAuthenticated) {
+            this._res.statusCode = 401;
             this.response(false, messages.AUTH_FAILED);
             return;
         }
@@ -127,21 +130,21 @@ class ControllerBase {
             case controller.action.LIST:
                 let records = [];
                 let query = new Database.Query(`SELECT * FROM ${this.getTableName()}`);
+                let recordCountQuery = new Database.Query(`SELECT COUNT(${this._context._keyField}) AS RecordCount FROM ${this.getTableName()}`);
                 new Filter(this._filters, query).apply();
+                new Filter(this._filters, recordCountQuery).apply();
                 this.uiFilter && this.uiFilter(this._filters, query);
+                this.uiFilter && this.uiFilter(this._filters, recordCountQuery);
                 if (this._sort && this._dir) {
                     query.orderBy = `${this._sort} ${this._dir}`;
-                } else {
-                    query.orderBy = `${this.constructor.name}Id DESC`;
                 }
                 comboData = await this.getCombos();
                 let extras = `LIMIT ${this._limit || 50} OFFSET ${this._start || 0}`;
-                query._extra = extras;
                 if (this._start !== null && this._limit !== null) {
                     query._extra = '';
-                    records = await query.execute();
+                    let recordCount = await recordCountQuery.execute();
 
-                    let recordCount = records.length;
+                    recordCount = recordCount[0].RecordCount;
                     query._extra = extras;
                     records = await query.execute();
                     this.response(true, null, {

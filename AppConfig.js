@@ -43,6 +43,14 @@ let config = {
         password: ''
     },
     controllers: controllers,
-    multerOptions: null
+    multerOptions: null,
+    autoDatabaseSetup: true,
+    googleAuthConfig: {
+        clientId: '803370434630-4rud03224e76id30lch382sbifrssgdh.apps.googleusercontent.com',
+        secrate: '9PHbr64ctrOwWZKX6rfU3tk8',
+        redirectUri: 'http://localhost:5000/api/google',
+        appRedirect: '/',
+        authFailedRedirect: '/Login?error=User not registered'
+    }
 };
-module.exports = config; 
+module.exports = config;

@@ -15,6 +15,15 @@ class WebPageRoute {
             .post(dpc.pageLoad);
     }
 
+    setView(route, dir) {
+        let r = `.${(route ? route : './Web/')}${dir}/`;
+        let pclass = new (require(r))();
+        pclass.route = r;
+        this.app.route(r.split("Web/Pages")[1])
+            .get(pclass.pageLoad)
+            .post(pclass.pageLoad);
+    }
+
     setRoute(route) {
         if (fs.existsSync('./Web')) {
             const dirList = Utility.getDirectoryList(route ? route : './Web');
@@ -22,14 +31,10 @@ class WebPageRoute {
                 if (dir !== "Common") {
                     const childDirList = Utility.getDirectoryList(`${(route ? route : './Web/')}${dir}`);
                     if (childDirList.length > 0) {
+                        route && this.setView(route, dir);
                         this.setRoute(`${(route ? route : './Web/')}${dir}/`);
                     } else {
-                        let r = `.${(route ? route : './Web/')}${dir}/`;
-                        let pclass = new (require(r))();
-                        pclass.route = r;
-                        this.app.route(r.split("Web/Pages")[1])
-                            .get(pclass.pageLoad)
-                            .post(pclass.pageLoad);
+                        this.setView(route, dir);
                     }
                 }
             });

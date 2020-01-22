@@ -20,7 +20,7 @@ module.exports = {
     },
     messages: {
         INVALID_ACTION: 'Invalid action.',
-        AUTH_FAILED: 'Authentication failed'
+        AUTH_FAILED: 'Unauthorized Access'
     },
     DB_SERVER_TYPE: {
         MYSQL: 'MYSQL',

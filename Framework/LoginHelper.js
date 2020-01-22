@@ -1,5 +1,6 @@
 const Utility = require("./Utility");
 const Database = require('./Database');
+const HttpContext = require('./HttpContext');
 
 class LoginArgs {
     constructor() {
@@ -13,6 +14,7 @@ class LoginResponse {
     constructor() {
         this.Success = false;
         this.Data = null;
+        this.ResponseCode = 0;
     }
 }
 
@@ -33,13 +35,19 @@ class LoginHelper {
             let result = await query.execute();
             let isUserFound = result.length > 0;
             if (isUserFound) {
+                delete result["Password"];
                 loginResponse.Success = isUserFound;
                 loginResponse.Data = result;
+                HttpContext.Authenticate(result[0]);
             }
-            return loginResponse;;
+            return loginResponse;
         } else {
             return loginResponse;
         }
+    }
+
+    static Logout() {
+        HttpContext.Request.session = null;
     }
 }
 module.exports = LoginHelper;

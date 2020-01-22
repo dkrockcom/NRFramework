@@ -1,5 +1,7 @@
 const express = require('express');
 const app = express();
+const path = require('path');
+const fs = require('fs');
 const ControllerBase = require('./ControllerBase');
 const Database = require('./Database');
 const Filter = require('./Filter');
@@ -17,6 +19,10 @@ const Mail = require('./Mail');
 const WebPage = require('./WebPage');
 const WebPageRoute = require('./WebPageRoute');
 const LoginHelper = require('./LoginHelper');
+const HttpContext = require('./HttpContext');
+const DatabaseSetup = require('./DatabaseSetup');
+const ReadOnlyControllerBase = require('./ReadOnlyControllerBase');
+const Helper = require('./Helper');
 
 class Route extends RouteBase {
     constructor(app, routes) {
@@ -37,6 +43,9 @@ class Route extends RouteBase {
 }
 
 let Framework = {
+    Helper: Helper,
+    ReadOnlyControllerBase: ReadOnlyControllerBase,
+    HttpContext: HttpContext,
     LoginHelper: LoginHelper,
     WebPage: WebPage,
     Mail: Mail,
@@ -84,6 +93,8 @@ let Framework = {
             path: "/"
         }));
 
+        HttpContext.Initialize(app);
+
         //Body Parser
         app.use(bodyparser.json({ limit: '100mb', extended: true }));
         app.use(bodyparser.urlencoded({ limit: '100mb', extended: true, parameterLimit: 1000000 }));
@@ -94,23 +105,40 @@ let Framework = {
         route.apiPrefix = config.apiPrefix || null
         route.init();
 
-        app.set('view engine', 'ejs');
-        let wpr = new WebPageRoute(app);
-        wpr.setRoute();
+        let isWebSetup = false;
+        if (fs.existsSync(path.resolve('Web'))) {
+            isWebSetup = true;
+            app.set('view engine', 'ejs');
+            let wpr = new WebPageRoute(app);
+            wpr.setRoute();
+        }
 
         //Set static contents
-        app.use(express.static(config.staticPath));
+        app.use(express.static(config.staticPath, { fallthrough: true, dotfiles: 'allow' }));
         //ExceptionHandler
         let exceptionHandler = new ExceptionHandler();
         exceptionHandler._app = app;
         exceptionHandler._callBack = config.exception;
         exceptionHandler.init();
 
+        // 404
+        app.use(function (req, res, next) {
+            if (req.method.toLocaleUpperCase() == 'GET') {
+                return isWebSetup ? res.redirect('/404') : res.status(404).send("<h1>404 Not Found</h1");
+            } else {
+                res.json({ success: false, message: '404 Not Found' })
+            }
+        });
+
         const server = http.createServer(app);
         server.listen(config.port, function () {
             console.log("Application is running at localhost:" + config.port);
             global.dbConfig = config.dbConfig;
             global.dbType = config.dbType;
+            if (config.autoDatabaseSetup) {
+                let dbSetup = new DatabaseSetup(config.dbConfig);
+                dbSetup.setup();
+            }
             cb({ server: server });
         });
     }
