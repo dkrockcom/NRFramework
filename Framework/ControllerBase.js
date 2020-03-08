@@ -1,10 +1,24 @@
 const { controller, messages } = require('./DFEnum');
-const Database = require('./Database');
+const { Query, Expression, CompareOperator, DBType } = require('./Database');
 const Filter = require('./Filter');
 const HttpContext = require('./HttpContext');
+const HttpHelper = require('./Helper/HttpHelper');
+const fs = require('fs');
+const path = require('path');
+const Utility = require("./Utility");
+const SecurityHelper = require("./Security/SecurityHelper");
+const { Excel, CSV, PDF } = require('./Export');
 
-class ControllerBase {
+class IControllerBase {
+    async afterSave() { };
+    async beforeSave() { };
+}
+
+class ControllerBase extends IControllerBase {
     constructor() {
+        super();
+        this.httpHelper = null;
+        this._isHardDelete = false;
         //Initializaed whrn create the onteollwr object form the useing routes.
         this._requiredModule = null;
         this._isAuthEnabled = true;
@@ -13,7 +27,7 @@ class ControllerBase {
         this._tableName = this.constructor.name;
         this._listDataFromTable = false;
 
-        this._action;
+        this._action = '';
         this._start = null;
         this._limit = null;
         this._filters = [];
@@ -29,7 +43,7 @@ class ControllerBase {
         this._comboRequests = [];
     }
 
-    init(req, res) {
+    init(req, res, next) {
         let params = Object.assign({}, req.body, req.params, req.query);
 
         this._action = params.action || '';
@@ -39,21 +53,32 @@ class ControllerBase {
         this._sort = params.sort;
         this._dir = params.dir;
         this._combos = params.combos && typeof (params.combos) === 'string' ? JSON.parse(params.combos) : params.combos || [];
-        this._id = params.id;
+        this._id = params.id || params.Id || params.ID;
         this._params = params.data || params || {};
         this._req = req;
         this._res = res;
+
+        //set HttpHelper
+        this.httpHelper = new HttpHelper(req, res, next);
+
         //Authentication check
         if (this._isAuthEnabled && !HttpContext.IsAuthenticated) {
-            this._res.statusCode = 401;
-            this.response(false, messages.AUTH_FAILED);
+            this._res.statusCode = 440;
+            this.response(false, messages.SESSION_EXPIRED);
             return;
         }
-        this.execute();
+
+        //Module and Role based security
+        if (!Utility.isNullOrEmpty(this._requiredModule) && !SecurityHelper.HasAccess(this._requiredModule.trim())) {
+            this._res.statusCode = 401;
+            this.response(false, messages.UNAUTHORIZED_ACCESS);
+            return;
+        }
+        this.execute(this.httpHelper);
     }
 
     getUserId() {
-        return this._req.session.user ? this._req.session.user.Id : null;
+        return this._req.session.user ? this._req.session.user.UserId : null;
     }
 
     setProperties(isUpdate) {
@@ -80,11 +105,12 @@ class ControllerBase {
         }
     }
 
-    async execute() {
+    async execute(http) {
         let comboData = {};
         switch (this._action.toUpperCase()) {
             case controller.action.SAVE:
                 let isUpdate = false;
+                await this.beforeSave(this.httpHelper);
                 if (this._id && (this._id === "" || this._id === 0)) {
                     this.response(false, "Id connot be zero", null);
                     return;
@@ -94,19 +120,21 @@ class ControllerBase {
                     await this._context.load(this._id);
                     this.setProperties(isUpdate);
                     await this._context.save(this._id);
+                    await this.afterSave(this._context);
                     this.response(true, 'Record sucessfully updated.', this._context);
 
                 } else {
                     this.setProperties(isUpdate);
                     await this._context.save();
+                    await this.afterSave(this._context);
                     this.response(true, 'Record successfully created.', this._context);
                 }
                 break;
 
             case controller.action.LOAD:
                 comboData = await this.getCombos();
-                let checkRecord = new Database.Query(`SELECT ${this._context._keyField} FROM ${this._context._tableName}`);
-                checkRecord.where.add(new Database.Expression(this._context._keyField, Database.CompareOperator.Equals, this._id, Database.DBType.int));
+                let checkRecord = new Query(`SELECT ${this._context._keyField} FROM ${this._context._tableName}`);
+                checkRecord.where.add(new Expression(this._context._keyField, CompareOperator.Equals, this._id, DBType.int));
                 let obj = await checkRecord.execute();
                 if (obj.length > 0) {
                     await this._context.load(this._id);
@@ -123,14 +151,14 @@ class ControllerBase {
                 break;
 
             case controller.action.DELETE:
-                await this._context.delete(this._id);
-                this.response(true, 'Record deleted');
+                this.handleDelete(this._id);
                 break;
 
             case controller.action.LIST:
+            case controller.action.EXPORT:
                 let records = [];
-                let query = new Database.Query(`SELECT * FROM ${this.getTableName()}`);
-                let recordCountQuery = new Database.Query(`SELECT COUNT(${this._context._keyField}) AS RecordCount FROM ${this.getTableName()}`);
+                let query = new Query(`SELECT * FROM ${this.getTableName()}`);
+                let recordCountQuery = new Query(`SELECT COUNT(${this._context._keyField}) AS RecordCount FROM ${this.getTableName()}`);
                 new Filter(this._filters, query).apply();
                 new Filter(this._filters, recordCountQuery).apply();
                 this.uiFilter && this.uiFilter(this._filters, query);
@@ -147,19 +175,28 @@ class ControllerBase {
                     recordCount = recordCount[0].RecordCount;
                     query._extra = extras;
                     records = await query.execute();
-                    this.response(true, null, {
-                        records: records,
-                        combos: comboData,
-                        recordCount: recordCount
-                    });
+                    if (this._action.toUpperCase() !== controller.action.EXPORT) {
+                        this.response(true, null, {
+                            records: records,
+                            combos: comboData,
+                            recordCount: recordCount
+                        });
+                    }
                 } else {
                     query._extra = '';
                     records = await query.execute();
-                    this.response(true, null, {
-                        records: records,
-                        combos: comboData,
-                        recordCount: records.length
-                    });
+                    if (this._action.toUpperCase() !== controller.action.EXPORT) {
+                        this.response(true, null, {
+                            records: records,
+                            combos: comboData,
+                            recordCount: records.length
+                        });
+                    }
+                }
+                //Export data
+                if (this._action.toUpperCase() === controller.action.EXPORT) {
+                    let type = !Utility.isNullOrEmpty(http.Params.type) ? http.Params.type.toUpperCase() : controller.exportType.EXCEL;
+                    this.dataExport(type, records);
                 }
                 break;
 
@@ -169,36 +206,50 @@ class ControllerBase {
         }
     }
 
+    async handleDelete(ids) {
+        if (this._isHardDelete) {
+            await this._context.delete(ids);
+        } else {
+            await this._context.softDelete(ids);
+        }
+        this.response(true, 'Record deleted');
+    }
+
+    dataExport(exportType, data) {
+        switch (exportType) {
+            case controller.exportType.EXCEL:
+                Excel.Export(this._tableName, data);
+                break;
+
+            case controller.exportType.PDF:
+                PDF.Export(this._tableName, data);
+                break;
+
+            case controller.exportType.CSV:
+                CSV.Export(this._tableName, data);
+                break;
+
+            default:
+                Excel.Export(this._tableName, data);
+                break;
+        }
+    }
+
     getTableName() {
         return this._listDataFromTable ? this._tableName : this._viewName;
     }
 
-    async getCombos(cb) {
-        let combos = {};
-        if (this._combos.length == 0)
-            return combos;
-
-        let lookupQuery = new Database.Query(`SELECT LookupTypeId, LookupType FROM LookupType`);
-        lookupQuery.where.add(new Database.In("LookupType", this._combos, Database.DBType.string));
-        let results = await lookupQuery.execute();
-
-        if (results.length == 0) {
-            return combos;
+    async getCombos() {
+        let hasLookupList = fs.existsSync(path.resolve('./LookupList.js'));
+        let LookupList = null;
+        if (hasLookupList) {
+            LookupList = require('../LookupList');
+        } else {
+            LookupList = require('./../Framework/Helper/LookupListBase');
         }
-
-        for (let index = 0; index < results.length; index++) {
-            const item = results[index];
-            let comboData = await this.getComboData(item.LookupTypeId);
-            combos[item.LookupType] = comboData;
-        }
-        return combos;
-    }
-
-    async getComboData(LookupTypeId) {
-        let query = new Database.Query(`SELECT LookupId, DisplayValue FROM Lookup`);
-        query.where.and(new Database.Expression("LookupTypeId", Database.CompareOperator.Equals, LookupTypeId, Database.DBType.int));
-        query.orderBy = "SortOrder";
-        return await query.execute();
+        LookupList = new LookupList();
+        LookupList.comboList = this._combos;
+        return await LookupList.LoadCombo();
     }
 
     response(status, message, data) {

@@ -18,8 +18,8 @@ module.exports = (dbConfig) => {
         }
 
         if (connection) {
-            console.error('connection.release');
             connection.release();
+            connection.destroy();
         }
 
         return;

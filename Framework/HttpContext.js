@@ -23,7 +23,9 @@ class HttpContext {
     static get Response() { return Util.getCLSHook('Response') }
     static get Next() { return Util.getCLSHook('Next') }
     static get Session() { return Util.getCLSHook('Session') }
-    static get IsAuthenticated() { return HttpContext.Session.isAuthenticated }
+    static get IsAuthenticated() { return HttpContext.Session && HttpContext.Session.isAuthenticated }
+    static get Roles() { return HttpContext.Session && HttpContext.Session.Roles || [] }
+    static get Modules() { return HttpContext.Session && HttpContext.Session.Modules || [] }
     //static get Identity() { return Util.getCLSHook('Identity') }
 
     Set(key, value) {
@@ -37,10 +39,12 @@ class HttpContext {
     static Authenticate(user) {
         const AppConfig = require('./../AppConfig');
         let options = {
-            maxAge: AppConfig.session.maxAge || (24 * 60 * 60 * 1000), // 24 hours
+            maxAge: AppConfig.session.maxAge && Number(AppConfig.session.maxAge) * 1000 || (24 * 60 * 60 * 1000), // 24 hours
             signed: true // Indicates if the cookie should be signed
         }
         HttpContext.Request.session.user = user;
+        HttpContext.Request.session.Roles = ["Admin"];
+        HttpContext.Request.session.Modules = [];
         HttpContext.Request.session.isAuthenticated = true;
         HttpContext.Request.sessionOptions = options;
     }

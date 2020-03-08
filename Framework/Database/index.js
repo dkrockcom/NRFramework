@@ -6,7 +6,7 @@ const { Between, NotBetween } = require('./Expression/Between');
 const { In, NotIn } = require('./Expression/In');
 const ParameterInfo = require('./ParameterInfo');
 
-class Database {
+class DB {
     static get Query() { return Query; }
     static get ParameterInfo() { return ParameterInfo; }
     static get CompareOperator() { return CompareOperator; }
@@ -19,4 +19,4 @@ class Database {
     static get Connection() { return null; }
 }
 
-module.exports = Database;
+module.exports = DB;

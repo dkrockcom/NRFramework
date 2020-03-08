@@ -11,8 +11,8 @@ class WebPageRoute {
         let dpc = new (require(`./../Web/Pages/Default`));
         dpc.route = "./../Web/Pages/Default";
         this.app.route("/")
-            .get(dpc.pageLoad)
-            .post(dpc.pageLoad);
+            .get(dpc.init.bind(dpc))
+            .post(dpc.init.bind(dpc));
     }
 
     setView(route, dir) {
@@ -20,8 +20,8 @@ class WebPageRoute {
         let pclass = new (require(r))();
         pclass.route = r;
         this.app.route(r.split("Web/Pages")[1])
-            .get(pclass.pageLoad)
-            .post(pclass.pageLoad);
+            .get(pclass.init.bind(pclass))
+            .post(pclass.init.bind(pclass));
     }
 
     setRoute(route) {

@@ -1,5 +1,5 @@
 const Utility = require("./Utility");
-const Database = require('./Database');
+const { Query, Expression, CompareOperator, DBType } = require('./Database');;
 const HttpContext = require('./HttpContext');
 
 class LoginArgs {
@@ -22,7 +22,6 @@ class LoginHelper {
     static get LoginArgs() { return LoginArgs }
     static get LoginResponse() { return LoginResponse }
     static async Login(loginArgs) {
-        const { Query, Expression, CompareOperator, DBType } = Database;
         let loginResponse = new LoginResponse();
         let query = new Query("SELECT * FROM User");
         let args = Object.keys(loginArgs);

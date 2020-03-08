@@ -2,7 +2,7 @@ const ReadOnlyControllerBase = require('./../ReadOnlyControllerBase');
 const LoginHelper = require('./../LoginHelper');
 const Helper = require('./../Helper');
 const Utility = require('./../Utility');
-const { google } = require('googleapis');
+const GoogleApi = require('googleapis');
 const User = require('./../../Business/User');
 
 class Google extends ReadOnlyControllerBase {
@@ -14,7 +14,7 @@ class Google extends ReadOnlyControllerBase {
             'https://www.googleapis.com/auth/userinfo.profile'
         ];
         this.config = require('./../../AppConfig');
-        this.auth = new google.auth.OAuth2(
+        this.auth = new GoogleApi.google.auth.OAuth2(
             this.config.googleAuthConfig.clientId,
             this.config.googleAuthConfig.secrate,
             this.config.googleAuthConfig.redirectUri
@@ -62,7 +62,7 @@ class Google extends ReadOnlyControllerBase {
      * Create the google auth object which gives us access to talk to google's apis.
      */
     createConnection() {
-        return new google.auth.OAuth2(
+        return new GoogleApi.google.auth.OAuth2(
             this.config.googleAuthConfig.clientId,
             this.config.googleAuthConfig.secrate,
             this.config.googleAuthConfig.redirectUri
@@ -93,14 +93,14 @@ class Google extends ReadOnlyControllerBase {
      * Helper function to get the library with access to the google plus api.
      */
     getGooglePlusApi(auth) {
-        return google.people({ version: 'v1' });
+        return GoogleApi.google.people({ version: 'v1' });
     }
 
 
     parseJwt(token) {
-        var base64Url = token.split('.')[1];
-        var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        var jsonPayload = decodeURIComponent(Buffer.from(base64, 'base64').toString().split('').map(function (c) {
+        let base64Url = token.split('.')[1];
+        let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        let jsonPayload = decodeURIComponent(Buffer.from(base64, 'base64').toString().split('').map(function (c) {
             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
 

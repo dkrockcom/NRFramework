@@ -4,7 +4,13 @@ module.exports = {
             SAVE: 'SAVE',
             LOAD: 'LOAD',
             LIST: 'LIST',
-            DELETE: 'DELETE'
+            DELETE: 'DELETE',
+            EXPORT: 'EXPORT'
+        },
+        exportType: {
+            EXCEL: 'EXCEL',
+            CSV: 'CSV',
+            PDF: 'PDF'
         },
         responseKey: {
             SUCCESS: 'success',
@@ -20,7 +26,8 @@ module.exports = {
     },
     messages: {
         INVALID_ACTION: 'Invalid action.',
-        AUTH_FAILED: 'Unauthorized Access'
+        UNAUTHORIZED_ACCESS: 'Unauthorized Access',
+        SESSION_EXPIRED: 'Session has expired'
     },
     DB_SERVER_TYPE: {
         MYSQL: 'MYSQL',

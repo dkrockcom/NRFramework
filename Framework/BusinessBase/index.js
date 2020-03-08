@@ -76,11 +76,24 @@ class BusinessBase {
         }
     }
 
-    async delete(id) {
+    async delete(ids) {
         const Framework = require('./../../Framework');
-        const { Query, Expression, DBType, CompareOperator } = Framework.Database;
+        const { Query, DBType, In } = Framework.Database;
         let query = new Query(`DELETE FROM ${this._tableName}`);
-        query.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
+        query.where.add(new In(this._keyField, ids, id, DBType.int));
+        await query.execute();
+    }
+
+    async softDelete(ids) {
+        const Framework = require('./../../Framework');
+        const { Query, DBType, In, ParameterInfo, Expression, CompareOperator } = Framework.Database;
+        let query = new Query(`UPDATE ${this._tableName} SET IsDeleted=@IsDeleted, ModifiedOn=@ModifiedOn, ModifiedBy=@ModifiedBy`);
+        query.addParameter(new ParameterInfo("IsDeleted", true, DBType.boolean));
+        query.addParameter(new ParameterInfo("ModifiedOn", new Date(), DBType.date));
+        const { IsAuthenticated, Session } = Framework.HttpContext;
+        query.addParameter(new ParameterInfo("ModifiedBy", IsAuthenticated ? Session.user.UserId : 0, DBType.int));
+        query.where.and(new In(this._keyField, ids, DBType.int));
+        query.where.and(new Expression("IsDeleted", CompareOperator.NotEquals, true, DBType.int));
         await query.execute();
     }
 

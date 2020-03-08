@@ -104,5 +104,9 @@ class Utility {
         const HttpContext = require('./HttpContext');
         return `${HttpContext.Request.protocol}://${HttpContext.Request.headers.host}`
     }
+
+    static Contains(array = [], item = '') {
+        return !this.isNullOrEmpty(array.find(e => e === item));
+    }
 }
 module.exports = Utility;

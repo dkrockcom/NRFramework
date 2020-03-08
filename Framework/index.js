@@ -3,7 +3,7 @@ const app = express();
 const path = require('path');
 const fs = require('fs');
 const ControllerBase = require('./ControllerBase');
-const Database = require('./Database');
+const DB = require('./Database');
 const Filter = require('./Filter');
 const Utility = require('./Utility');
 const BusinessBase = require('./BusinessBase');
@@ -23,6 +23,10 @@ const HttpContext = require('./HttpContext');
 const DatabaseSetup = require('./DatabaseSetup');
 const ReadOnlyControllerBase = require('./ReadOnlyControllerBase');
 const Helper = require('./Helper');
+const Export = require('./Export');
+const Prototype = require('./Prototype');
+const Task = require('./Task');
+const StartupBase = require('./StartupBase');
 
 class Route extends RouteBase {
     constructor(app, routes) {
@@ -42,28 +46,27 @@ class Route extends RouteBase {
     }
 }
 
-let Framework = {
-    Helper: Helper,
-    ReadOnlyControllerBase: ReadOnlyControllerBase,
-    HttpContext: HttpContext,
-    LoginHelper: LoginHelper,
-    WebPage: WebPage,
-    Mail: Mail,
-    config: null,
-    ControllerBase: ControllerBase,
-    Database: Database,
-    Filter: Filter,
-    Utility: Utility,
-    BusinessBase: BusinessBase,
-    Authorize: (req, userData) => {
-        let options = {
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours
-            signed: true // Indicates if the cookie should be signed
-        }
-        req.session.user = userData;
-        req.sessionOptions = options;
-    },
-    Initialize: (config, cb) => {
+class Framework {
+    static get StartupBase() { return StartupBase };
+    static get Task() { return Task };
+    static get Prototype() { return Prototype };
+    static get Export() { return Export };
+    static get Helper() { return Helper };
+    static get ReadOnlyControllerBase() { return ReadOnlyControllerBase };
+    static get HttpContext() { return HttpContext };
+    static get LoginHelper() { return LoginHelper };
+    static get WebPage() { return WebPage };
+    static get Mail() { return Mail };
+    static get config() { return null };
+    static get ControllerBase() { return ControllerBase };
+    static get Database() { return DB };
+    static get Filter() { return Filter };
+    static get Utility() { return Utility };
+    static get BusinessBase() { return BusinessBase };
+    static StartApp(program) {
+        return new program();
+    }
+    static Initialize(config, cb) {
         Framework.config = config;
         if (config.cors) {
             //Access Control Allow
@@ -105,9 +108,8 @@ let Framework = {
         route.apiPrefix = config.apiPrefix || null
         route.init();
 
-        let isWebSetup = false;
-        if (fs.existsSync(path.resolve('Web'))) {
-            isWebSetup = true;
+        let isWebSetup = fs.existsSync(path.resolve('Web'));
+        if (isWebSetup) {
             app.set('view engine', 'ejs');
             let wpr = new WebPageRoute(app);
             wpr.setRoute();
@@ -133,13 +135,14 @@ let Framework = {
         const server = http.createServer(app);
         server.listen(config.port, function () {
             console.log("Application is running at localhost:" + config.port);
+            console.log("Application is started on: " + new Date());
             global.dbConfig = config.dbConfig;
             global.dbType = config.dbType;
             if (config.autoDatabaseSetup) {
                 let dbSetup = new DatabaseSetup(config.dbConfig);
                 dbSetup.setup();
             }
-            cb({ server: server });
+            cb(app, server);
         });
     }
 }
