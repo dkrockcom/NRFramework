@@ -57,7 +57,6 @@ class Framework {
     static get LoginHelper() { return LoginHelper };
     static get WebPage() { return WebPage };
     static get Mail() { return Mail };
-    static get config() { return null };
     static get ControllerBase() { return ControllerBase };
     static get Database() { return DB };
     static get Filter() { return Filter };
@@ -67,7 +66,6 @@ class Framework {
         return new program();
     }
     static Initialize(config, cb) {
-        Framework.config = config;
         if (config.cors) {
             //Access Control Allow
             app.use(function (req, res, next) {

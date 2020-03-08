@@ -34,15 +34,23 @@ class LoginHelper {
             let result = await query.execute();
             let isUserFound = result.length > 0;
             if (isUserFound) {
+                result = result[0];
+                let userRoles = new Query("SELECT Role.RoleId, Role.RoleName FROM UserRole LEFT OUTER JOIN Role ON UserRole.RoleId = Role.RoleId");
+                userRoles.where.and(new Expression("UserRole.UserId", CompareOperator.Equals, result.UserId, DBType.int));
+                userRoles = await userRoles.execute();
                 delete result["Password"];
                 loginResponse.Success = isUserFound;
                 loginResponse.Data = result;
-                HttpContext.Authenticate(result[0]);
+                HttpContext.Authenticate(result, userRoles);
             }
             return loginResponse;
         } else {
             return loginResponse;
         }
+    }
+
+    static PasswordHash(password) {
+        return
     }
 
     static Logout() {

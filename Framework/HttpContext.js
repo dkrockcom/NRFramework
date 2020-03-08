@@ -36,14 +36,14 @@ class HttpContext {
         return Util.getCLSHook(key);
     }
 
-    static Authenticate(user) {
+    static Authenticate(user, roles) {
         const AppConfig = require('./../AppConfig');
         let options = {
             maxAge: AppConfig.session.maxAge && Number(AppConfig.session.maxAge) * 1000 || (24 * 60 * 60 * 1000), // 24 hours
             signed: true // Indicates if the cookie should be signed
         }
         HttpContext.Request.session.user = user;
-        HttpContext.Request.session.Roles = ["Admin"];
+        HttpContext.Request.session.Roles = roles || [];
         HttpContext.Request.session.Modules = [];
         HttpContext.Request.session.isAuthenticated = true;
         HttpContext.Request.sessionOptions = options;

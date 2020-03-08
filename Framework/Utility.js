@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt');
+const md5 = require('md5');
 const fs = require("fs");
 const cls = require('cls-hooked');
 const ns = cls.createNamespace("Request-Context-5195409c4e8d71bf5dd408342f5942bb");
@@ -42,15 +42,7 @@ class Utility {
     }
 
     static generateHash(password) {
-        return bcrypt.hashSync(password, this.passwordHashRound);
-    }
-
-    /**
-     * @param password Plan Text Passwod.
-     * @param hash The hash password which is stored in DB.
-     */
-    static passwordCheck(password, hash) {
-        return bcrypt.compareSync(password, hash);
+        return md5(password);
     }
 
     /**

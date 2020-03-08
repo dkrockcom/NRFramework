@@ -1,5 +1,6 @@
 const ControllerBase = require('../ControllerBase');
 const Utility = require('./../Utility');
+const LoginHelper = require('./../LoginHelper');
 
 class Login extends ControllerBase {
     constructor() {
@@ -7,11 +8,33 @@ class Login extends ControllerBase {
         this._isAuthEnabled = false;
     }
 
-    execute() {
-        if (!this._req.session.user) {
-            Utility.authorize(this._req, { user: 'devesh' }, null); //TODO: Temporary User need to change.
+    async execute(http) {
+        let response = { success: false, message: '' };
+        if (Utility.isNullOrEmpty(http.Params["Email"]) && Utility.isNullOrEmpty(http.Params["Username"])) {
+            response.message = "Please Enter Valid credentials";
+            return http.Response.json(response);
         }
-        this._res.json({ success: true, data: this._req.session.user });
+        if (Utility.isNullOrEmpty(http.Params["Password"])) {
+            response.message = "Please enter your password";
+            return http.Response.json(response);
+        }
+        let args = new LoginHelper.LoginArgs();
+        if (!Utility.isNullOrEmpty(http.Params["Email"])) {
+            args.Email = http.Params["Email"];
+        }
+        if (!Utility.isNullOrEmpty(http.Params["Username"])) {
+            args.Username = http.Params["Username"];
+        }
+        args.Password = Utility.generateHash(http.Params["Password"]);
+        let resp = await LoginHelper.Login(args);
+        if (resp.Success) {
+            response.success = true;
+            response.roles = http.Session.Roles;
+            response.message = "Logged In";
+        } else {
+            response.message = "Please Enter Valid credentials";
+        }
+        http.Response.json(response);
     }
 }
 module.exports = Login;

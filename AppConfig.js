@@ -13,8 +13,8 @@ let config = {
         connectionLimit: 10,
         host: 'localhost',
         user: 'root',
-        password: '01470258',
-        database: 'test'
+        password: '123456',
+        database: 'framework'
     },
     authType: '', //session || token - default session
     session: {
@@ -28,12 +28,12 @@ let config = {
         console.log("----------------ERROR-LOGGER---------------");
         console.log(error.stack);
         let mail = new Mail();
-        mail.send({
-            to: 'admin@dkrock.com',
-            from: 'deveshmig125@gmail.com',
-            html: error.stack,
-            subject: 'NRFramework - Error'
-        });
+        // mail.send({
+        //     to: 'admin@dkrock.com',
+        //     from: 'deveshmig125@gmail.com',
+        //     html: error.stack,
+        //     subject: 'NRFramework - Error'
+        // });
     },
     smtpConfig: {
         host: '',
