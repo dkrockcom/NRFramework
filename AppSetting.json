@@ -35,5 +35,17 @@
         "redirectUri": "http: //localhost:5000/api/google",
         "appRedirect": "/",
         "authFailedRedirect": "/Login?error=User not registered"
+    },
+    "sso": {
+        "google": {
+            "clientId": "803370434630-4rud03224e76id30lch382sbifrssgdh.apps.googleusercontent.com",
+            "secrate": "9PHbr64ctrOwWZKX6rfU3tk8",
+            "redirectUri": "http: //localhost:5000/api/google",
+            "appRedirect": "/",
+            "authFailedRedirect": "/Login?error=User not registered"
+        },
+        "microsoft": {},
+        "facebook": {},
+        "github": {}
     }
 }

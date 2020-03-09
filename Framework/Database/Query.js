@@ -1,5 +1,6 @@
 const ConnectionPool = require('./ConnectionPool');
 const DBType = require('./DBType');
+const Utility = require('./../Utility');
 
 class Query {
     constructor(query, config = {}, timeout = 30000) {
@@ -15,7 +16,7 @@ class Query {
             add: this.add.bind(this)
         };
         this.orderBy = null;
-        this.connectionPool = ConnectionPool(Object.assign({}, global.dbConfig, this._config));
+        this.connectionPool = ConnectionPool(Object.assign({}, Utility.AppSetting.dbConfig, this._config));
     };
 
     and(expression) {

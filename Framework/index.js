@@ -138,8 +138,6 @@ class Framework {
         server.listen(appPort, function () {
             console.log("Application is running at localhost:" + appPort);
             console.log("Application is started on: " + new Date());
-            global.dbConfig = config.dbConfig;
-            global.dbType = config.dbType;
             if (config.autoDatabaseSetup) {
                 let dbSetup = new DatabaseSetup(config.dbConfig);
                 dbSetup.setup();

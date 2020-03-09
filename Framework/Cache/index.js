@@ -13,12 +13,12 @@ class Cache {
         return cacheFile;
     }
 
-    static ServerCache(req, res, next) {
+    static ServerCache = (req, res, next) => {
         exec(this.ServerPlatformCache, [process.pid]);
         next();
     }
 
-    static SecurityCache() {
+    static SecurityCache = () => {
         exec(this.ServerPlatformCache, [process.pid]);
     }
 };
