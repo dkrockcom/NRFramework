@@ -37,9 +37,9 @@ class HttpContext {
     }
 
     static Authenticate(user, roles) {
-        const AppConfig = require('./../AppConfig');
+        const AppSetting = Util.AppSetting;
         let options = {
-            maxAge: AppConfig.session.maxAge && Number(AppConfig.session.maxAge) * 1000 || (24 * 60 * 60 * 1000), // 24 hours
+            maxAge: AppSetting.session.maxAge && Number(AppSetting.session.maxAge) * 1000 || (24 * 60 * 60 * 1000), // 24 hours
             signed: true // Indicates if the cookie should be signed
         }
         HttpContext.Request.session.user = user;

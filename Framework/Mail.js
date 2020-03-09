@@ -1,10 +1,10 @@
 
 const nodemailer = require('nodemailer');
+const Utility = require('./Utility');
 
 class Mail {
     constructor(smtpConfigCustom) {
-        let config = require('./../AppConfig');
-        let { smtpConfig } = config;
+        let { smtpConfig } = Utility.AppSetting;
         this.host = smtpConfigCustom && smtpConfigCustom.host || smtpConfig.host;
         this.port = smtpConfigCustom && smtpConfigCustom.port || smtpConfig.port;
         this.secure = smtpConfigCustom && smtpConfigCustom.secure || smtpConfig.secure;

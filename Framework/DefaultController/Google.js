@@ -13,7 +13,7 @@ class Google extends ReadOnlyControllerBase {
             'https://www.googleapis.com/auth/userinfo.email',
             'https://www.googleapis.com/auth/userinfo.profile'
         ];
-        this.config = require('./../../AppConfig');
+        this.config = Utility.AppSetting;
         this.auth = new GoogleApi.google.auth.OAuth2(
             this.config.googleAuthConfig.clientId,
             this.config.googleAuthConfig.secrate,

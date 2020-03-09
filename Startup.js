@@ -7,5 +7,10 @@ class Startup extends StartupBase {
         const { TaskManager } = Framework.Task;
         //TaskManager.Add(new TestTask(), '*/2 * * * * *', "TestTask");
     }
+
+    async onException(error) {
+        console.log("----------------ERROR-LOGGER---------------");
+        console.log(error.stack);
+    }
 }
 Framework.StartApp(Startup);
