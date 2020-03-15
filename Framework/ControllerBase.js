@@ -63,7 +63,7 @@ class ControllerBase extends IControllerBase {
 
         //Authentication check
         if (this._isAuthEnabled && !HttpContext.IsAuthenticated) {
-            this._res.statusCode = 440;
+            this._res.statusCode = 401;//440; Temporary Change
             this.response(false, messages.SESSION_EXPIRED);
             return;
         }

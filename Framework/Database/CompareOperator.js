@@ -12,6 +12,7 @@ let CompareOperator = {
     StartsWith: 'StartsWith',
     EndsWith: 'EndsWith',
     IsNull: 'IsNull',
-    IsNotNull: 'IsNotNull'
+    IsNotNull: 'IsNotNull',
+    Search: "Search"
 }
 module.exports = CompareOperator;

@@ -80,18 +80,17 @@ class Query {
                     break;
 
 
-                // case DBType.boolean:
-                //     value = new Date(params._value);
-                //     if (Array.isArray(params._value)) {
-                //         let tempValue = [];
-                //         params._value.forEach(iv => {
-                //             tempValue.push(new Date(iv));
-                //         });
-                //         value = tempValue;
-                //     } else {
-                //         value = new Date(params._value);
-                //     }
-                //     break;
+                case DBType.boolean:
+                    if (Array.isArray(params._value)) {
+                        let tempValue = [];
+                        params._value.forEach(iv => {
+                            tempValue.push(JSON.parse(vi) ? 1 : 0);
+                        });
+                        value = tempValue;
+                    } else {
+                        value = JSON.parse(params._value) ? 1 : 0;
+                    }
+                    break;
 
                 default:
                     value = params._value ? params._value : params._value;

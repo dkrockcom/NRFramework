@@ -19,7 +19,8 @@ class LookupListBase {
 
         for (let index = 0; index < this.comboList.length; index++) {
             const lookupType = this.comboList[index];
-            if (!results.find(e => e.LookupType == lookupType)) {
+            if (!(results.findIndex(e => e.LookupType === lookupType) > -1)) {
+                //if (!results.find(e => e.LookupType == lookupType)) {
                 this.notFound.push(lookupType);
             }
         }

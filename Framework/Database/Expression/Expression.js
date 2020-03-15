@@ -37,9 +37,12 @@ class Expression {
             case CompareOperator.Contains:
             case CompareOperator.StartsWith:
             case CompareOperator.EndsWith:
+                operator = "LIKE";
+                break;
+
             case CompareOperator.NotLike:
             case CompareOperator.NotContains:
-                operator = "LIKE";
+                operator = "NOT LIKE";
                 break;
         }
         // switch (comparison) {
