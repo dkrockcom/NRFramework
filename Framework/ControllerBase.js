@@ -146,7 +146,7 @@ class ControllerBase extends IControllerBase {
                     record[this._context._keyField] = record["Id"] = this._context.Id.value;
                     this.response(true, "Record Loaded", { data: record, combos: comboData });
                 } else {
-                    this.response(false, "Record not exists");
+                    this.response(false, "Record not exists", { data: null, combos: comboData });
                 }
                 break;
 
@@ -254,13 +254,11 @@ class ControllerBase extends IControllerBase {
 
     response(status, message, data) {
         let option = {
-            [controller.responseKey.SUCCESS]: status
+            [controller.responseKey.SUCCESS]: status,
+            [controller.responseKey.DATA]: data
         }
         if (message)
             option[controller.responseKey.MESSAGE] = message;
-
-        if (status)
-            option[controller.responseKey.DATA] = data;
 
         this._res.json(option);
     }

@@ -110,14 +110,14 @@ class Framework {
         }
 
         let isWebSetup = fs.existsSync(path.resolve('Web'));
-        if (isWebSetup) {
+        if (isWebSetup && !config.disableWeb) {
             app.set('view engine', 'ejs');
             let wpr = new WebPageRoute(app);
             wpr.setRoute();
         }
 
         //Set static contents
-        app.use(express.static(config.staticPath, { fallthrough: true, dotfiles: 'allow' }));
+        app.use(express.static(path.resolve(config.staticPath), { fallthrough: true, dotfiles: 'allow' }));
         //ExceptionHandler
         let exceptionHandler = new ExceptionHandler();
         exceptionHandler._app = app;

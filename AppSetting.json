@@ -8,6 +8,7 @@
     "controllers": [],
     "multerOptions": null,
     "autoDatabaseSetup": true,
+    "disableWeb": false,
     "dbConfig": {
         "connectionLimit": 10,
         "host": "localhost",
