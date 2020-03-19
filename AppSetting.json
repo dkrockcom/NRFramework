@@ -1,5 +1,6 @@
 {
     "appName": "dkrock",
+    "domain": "codehuntz.com",
     "port": 5000,
     "staticPath": "public",
     "apiPrefix": "api",

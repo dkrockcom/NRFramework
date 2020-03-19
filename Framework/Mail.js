@@ -23,13 +23,12 @@ class Mail {
     }
 
     resolveTags(text, tags) {
-        let value = text;
         if (text && tags) {
             for (var o in tags) {
                 text = text.replace(new RegExp('{' + o + '}', 'g'), tags[o]);
             }
         }
-        return value;
+        return text;
     }
 
     async send(mailOptions, tags) {
