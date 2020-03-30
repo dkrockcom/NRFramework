@@ -40,16 +40,6 @@ class Utility {
         return value;
     }
 
-    static authorize(req, userData, maxAge) {
-        let options = {
-            maxAge: maxAge || 24 * 60 * 60 * 1000, // 24 hours
-            signed: true // Indicates if the cookie should be signed
-        }
-        req.session.isAuthenticated = true;
-        req.session.user = userData;
-        req.sessionOptions = options;
-    }
-
     static generateHash(password) {
         return md5(password);
     }

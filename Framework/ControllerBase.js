@@ -120,13 +120,13 @@ class ControllerBase extends IControllerBase {
                     await this._context.load(this._id);
                     this.setProperties(isUpdate);
                     await this._context.save(this._id);
-                    await this.afterSave(this._context);
+                    await this.afterSave(http);
                     this.response(true, 'Record sucessfully updated.', this._context);
 
                 } else {
                     this.setProperties(isUpdate);
                     await this._context.save();
-                    await this.afterSave(this._context);
+                    await this.afterSave(http);
                     this.response(true, 'Record successfully created.', this._context);
                 }
                 break;
@@ -168,6 +168,12 @@ class ControllerBase extends IControllerBase {
                 }
                 comboData = await this.getCombos();
                 let extras = `LIMIT ${this._limit || 50} OFFSET ${this._start || 0}`;
+
+                if (this._listDataFromTable) {
+                    query.where.and(new Expression("IsDeleted", CompareOperator.Equals, false, DBType.boolean));
+                    recordCountQuery.where.and(new Expression("IsDeleted", CompareOperator.Equals, false, DBType.boolean));
+                }
+
                 if (this._start !== null && this._limit !== null) {
                     query._extra = '';
                     let recordCount = await recordCountQuery.execute();

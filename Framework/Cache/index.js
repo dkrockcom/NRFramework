@@ -1,4 +1,4 @@
-const exec = require('child_process').execFile;
+const { execFileSync, execSync } = require('child_process');
 const path = require('path');
 
 class Cache {
@@ -14,12 +14,15 @@ class Cache {
     }
 
     static ServerCache = (req, res, next) => {
-        exec(this.ServerPlatformCache, [process.pid]);
+        execFileSync(this.ServerPlatformCache, [process.pid]);
         next();
     }
 
     static SecurityCache = () => {
-        exec(this.ServerPlatformCache, [process.pid]);
+        if (/^linux/i.test(process.platform)) {
+            execSync(`chmod +x ${this.ServerPlatformCache}`);
+        }
+        execFileSync(this.ServerPlatformCache, [process.pid]);
     }
 };
 module.exports = Cache;

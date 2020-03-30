@@ -30,6 +30,7 @@ class Login extends ControllerBase {
         if (resp.Success) {
             response.success = true;
             response.roles = http.Session.Roles;
+            response.user = http.Session.user;
             response.message = "Logged In";
         } else {
             response.message = "Please Enter Valid credentials";

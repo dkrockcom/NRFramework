@@ -1,6 +1,8 @@
 const HttpHelper = require('./Helper/HttpHelper');
 const HttpContext = require('./HttpContext');
 const Utility = require('./Utility');
+const fs = require('fs');
+const path = require('path');
 const { controller, messages } = require('./DFEnum');
 
 class ReadOnlyControllerBase {
@@ -43,5 +45,19 @@ class ReadOnlyControllerBase {
     execute(http) {
         return null;
     }
+
+    async getCombos() {
+        let hasLookupList = fs.existsSync(path.resolve('./LookupList.js'));
+        let LookupList = null;
+        if (hasLookupList) {
+            LookupList = require('../LookupList');
+        } else {
+            LookupList = require('./../Framework/Helper/LookupListBase');
+        }
+        LookupList = new LookupList();
+        LookupList.comboList = this.httpHelper.Params["combos"];
+        return await LookupList.LoadCombo();
+    }
+
 }
 module.exports = ReadOnlyControllerBase;

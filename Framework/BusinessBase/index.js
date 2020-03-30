@@ -5,8 +5,8 @@ const ignoreList = ["Id", "_tableName", "_keyField"];
 class BusinessBase {
     constructor() {
         this.Id = { type: DBType.int, value: null };
-        this._tableName = this.constructor.TableName || this.constructor.name;
-        this._keyField = this.constructor.KeyField || `${this.constructor.name}Id`;
+        this._tableName = this.TableName || this.constructor.name;
+        this._keyField = this.KeyField || `${this.constructor.name}Id`;
 
         //Default fields
         this.CreatedBy = { type: DBType.int, value: 0 };
@@ -80,7 +80,7 @@ class BusinessBase {
         const Framework = require('./../../Framework');
         const { Query, DBType, In } = Framework.Database;
         let query = new Query(`DELETE FROM ${this._tableName}`);
-        query.where.add(new In(this._keyField, ids, id, DBType.int));
+        query.where.add(new In(this._keyField, ids, DBType.int));
         await query.execute();
     }
 

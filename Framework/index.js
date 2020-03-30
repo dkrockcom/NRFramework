@@ -84,15 +84,15 @@ class Framework {
             upload = multer(config.multerOptions);
         }
         app.use(upload.any());
-        app.use(cookieParser(config.session.name || config.appName));
+        app.use(cookieParser(config.appName));
 
         //Session Initialization
         app.use(cookieSession({
-            name: config.session.name || config.appName,
-            keys: config.session.keys,
-            secret: config.session.name || config.appName,
+            name: config.appName,
+            keys: [config.appName],
+            secret: config.appName,
             // Cookie Options
-            maxAge: config.session.maxAge || 24 * 60 * 60 * 1000, // 24 hours
+            maxAge: config.sessionTimeout || 24 * 60 * 60 * 1000, // 24 hours
             path: "/"
         }));
 

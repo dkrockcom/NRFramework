@@ -18,12 +18,7 @@
         "database": "framework",
         "multipleStatements": true
     },
-    "session": {
-        "keys": [
-            "dkrock"
-        ],
-        "maxAge": 86400
-    },
+    "sessionTimeout": 86400,
     "smtpConfig": {
         "host": "",
         "port": 587,
