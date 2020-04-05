@@ -23,7 +23,7 @@ class TaskManager {
     }
 
     static Start(name) {
-        let index = this.ActiveTask.findIndex(e => e.name === "DeleteUser");
+        let index = this.ActiveTask.findIndex(e => e.name === name);
         if (index > -1) {
             let activeTask = this.ActiveTask[index];
             !activeTask.task.running && activeTask.task.start();
@@ -31,7 +31,7 @@ class TaskManager {
     }
 
     static Stop(name) {
-        let index = this.ActiveTask.findIndex(e => e.name === "DeleteUser");
+        let index = this.ActiveTask.findIndex(e => e.name === name);
         if (index > -1) {
             let activeTask = this.ActiveTask[index];
             activeTask.task.running && activeTask.task.stop();
