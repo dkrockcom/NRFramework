@@ -1,3 +1,4 @@
+const Logger = require('./Logger');
 const express = require('express');
 const app = express();
 const path = require('path');
@@ -48,6 +49,7 @@ class Route extends RouteBase {
 }
 
 class Framework {
+    static get Logger() { return Logger };
     static get StartupBase() { return StartupBase };
     static get Task() { return Task };
     static get Prototype() { return Prototype };
@@ -135,9 +137,9 @@ class Framework {
 
         const server = http.createServer(app);
         let appPort = process.env.PORT || config.port;
-        server.listen(appPort, function () {
-            console.log("Application is running at localhost:" + appPort);
-            console.log("Application is started on: " + new Date());
+        server.listen(appPort, () => {
+            Logger.Info("Application is running at localhost:" + appPort);
+            Logger.Info("Application is started on: " + new Date());
             if (config.autoDatabaseSetup) {
                 let dbSetup = new DatabaseSetup(config.dbConfig);
                 dbSetup.setup();

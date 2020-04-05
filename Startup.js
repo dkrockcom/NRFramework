@@ -9,8 +9,8 @@ class Startup extends StartupBase {
     }
 
     async onException(error) {
-        console.log("----------------ERROR-LOGGER---------------");
-        console.log(error.stack);
+        // console.log("----------------ERROR-LOGGER---------------");
+        // console.log(error.stack);
     }
 }
 Framework.StartApp(Startup);
