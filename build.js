@@ -39,10 +39,12 @@ class Build {
                 fs.copySync(path.resolve(dir), `${this.BuildPath}/${dir}`);
             }
         });
-        this.Log('React Build processing');
-        execSync("cd Dashboard && npm run build");
-        this.Log('Copying React App');
-        fs.copySync(this.DashboardBuildPath, path.resolve("Build/Public"));
+        if (fs.existsSync(this.DashboardPath)) {
+            this.Log('React Build processing');
+            execSync("cd Dashboard && npm run build");
+            this.Log('Copying React App');
+            fs.copySync(this.DashboardBuildPath, path.resolve("Build/Public"));
+        }
         this.Log('Application has been successfully Build');
     }
 }

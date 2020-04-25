@@ -1,69 +1,47 @@
 const winston = require('winston');
 const { combine, timestamp, prettyPrint } = winston.format;
+const moment = require('moment');
 require('winston-daily-rotate-file');
 
 class Logger {
     static get TransportConsole() { return new winston.transports.Console() }
-    static get TransportInfo() {
+    static Transport(level, customFileName) {
         return new (winston.transports.DailyRotateFile)({
-            filename: 'logs/info-%DATE%.log',
+            filename: `logs/${moment().format('YYYY-MM-DD')}/${customFileName || level}-%DATE%.log`,
             datePattern: 'YYYY-MM-DD',
             prepend: true,
-            level: "info",
+            level: level,
             maxDays: 0,
-            maxSize: '5m'
-        })
-    }
-
-    static get TransportError() {
-        return new (winston.transports.DailyRotateFile)({
-            filename: 'logs/error-%DATE%.log',
-            datePattern: 'YYYY-MM-DD',
-            prepend: true,
-            level: "error",
-            maxDays: 0,
-            maxSize: '5m'
+            maxSize: '10m'
         });
     }
 
-    static get TransportDebug() {
-        return new (winston.transports.DailyRotateFile)({
-            filename: 'logs/debug-%DATE%.log',
-            datePattern: 'YYYY-MM-DD',
-            prepend: true,
-            level: "debug",
-            maxDays: 0,
-            maxSize: '5m'
-        });
+    static CreateLogger(level, args, args1) {
+        winston.createLogger({
+            format: combine(
+                timestamp(),
+                prettyPrint()
+            ),
+            transports: [
+                this.TransportConsole,
+                this.Transport(level)
+            ]
+        })[level](args, args1);
     }
 
     static Info(args, args1) {
-        winston.createLogger({
-            format: combine(
-                timestamp(),
-                prettyPrint()
-            ),
-            transports: [
-                this.TransportConsole,
-                this.TransportInfo
-            ]
-        }).info(args, args1);
+        this.CreateLogger("info", args, args1);
     }
 
     static Error(args, args1) {
-        winston.createLogger({
-            format: combine(
-                timestamp(),
-                prettyPrint()
-            ),
-            transports: [
-                this.TransportConsole,
-                this.TransportError
-            ]
-        }).error(args, args1);
+        this.CreateLogger("error", args, args1);
     }
 
     static Debug(args, args1) {
+        this.CreateLogger("debug", args, args1);
+    }
+
+    static Log(level, customFileName, args, args1) {
         winston.createLogger({
             format: combine(
                 timestamp(),
@@ -71,9 +49,9 @@ class Logger {
             ),
             transports: [
                 this.TransportConsole,
-                this.TransportDebug
+                this.Transport(level, customFileName)
             ]
-        }).debug(args, args1);
+        })[level](args, args1);
     }
 }
 module.exports = Logger;

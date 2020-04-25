@@ -1,5 +1,6 @@
 node_modules
 logs
+build
 Framework/Cache/cache-linux-server
 Framework/Cache/cache-macos-server
 Framework/Cache/cache-win-server.exe
