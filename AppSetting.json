@@ -1,48 +1,49 @@
 {
-    "appName": "dkrock",
-    "domain": "codehuntz.com",
-    "port": 5000,
-    "staticPath": "public",
-    "apiPrefix": "api",
-    "cors": true,
-    "dbType": "mysql",
-    "controllers": [],
-    "multerOptions": null,
-    "autoDatabaseSetup": true,
-    "disableWeb": false,
-    "dbConfig": {
-        "connectionLimit": 10,
-        "host": "localhost",
-        "user": "root",
-        "password": "123456",
-        "database": "framework",
-        "multipleStatements": true
-    },
-    "sessionTimeout": 86400,
-    "smtpConfig": {
-        "host": "",
-        "port": 587,
-        "secure": false,
-        "username": "",
-        "password": ""
-    },
-    "googleAuthConfig": {
-        "clientId": "803370434630-4rud03224e76id30lch382sbifrssgdh.apps.googleusercontent.com",
-        "secrate": "9PHbr64ctrOwWZKX6rfU3tk8",
-        "redirectUri": "http: //localhost:5000/api/google",
-        "appRedirect": "/",
-        "authFailedRedirect": "/Login?error=User not registered"
-    },
-    "sso": {
-        "google": {
-            "clientId": "803370434630-4rud03224e76id30lch382sbifrssgdh.apps.googleusercontent.com",
-            "secrate": "9PHbr64ctrOwWZKX6rfU3tk8",
-            "redirectUri": "http: //localhost:5000/api/google",
-            "appRedirect": "/",
-            "authFailedRedirect": "/Login?error=User not registered"
-        },
-        "microsoft": {},
-        "facebook": {},
-        "github": {}
-    }
+	"version": "1.0.0",
+	"appName": "dkrock",
+	"domain": "codehuntz.com",
+	"port": 5000,
+	"staticPath": "public",
+	"apiPrefix": "api",
+	"cors": true,
+	"dbType": "mysql",
+	"controllers": [],
+	"multerOptions": null,
+	"autoDatabaseSetup": true,
+	"disableWeb": false,
+	"dbConfig": {
+		"connectionLimit": 10,
+		"host": "localhost",
+		"user": "root",
+		"password": "123456",
+		"database": "framework",
+		"multipleStatements": true
+	},
+	"sessionTimeout": 86400,
+	"smtpConfig": {
+		"host": "",
+		"port": 587,
+		"secure": false,
+		"username": "",
+		"password": ""
+	},
+	"googleAuthConfig": {
+		"clientId": "803370434630-4rud03224e76id30lch382sbifrssgdh.apps.googleusercontent.com",
+		"secrate": "9PHbr64ctrOwWZKX6rfU3tk8",
+		"redirectUri": "http: //localhost:5000/api/google",
+		"appRedirect": "/",
+		"authFailedRedirect": "/Login?error=User not registered"
+	},
+	"sso": {
+		"google": {
+			"clientId": "803370434630-4rud03224e76id30lch382sbifrssgdh.apps.googleusercontent.com",
+			"secrate": "9PHbr64ctrOwWZKX6rfU3tk8",
+			"redirectUri": "http: //localhost:5000/api/google",
+			"appRedirect": "/",
+			"authFailedRedirect": "/Login?error=User not registered"
+		},
+		"microsoft": {},
+		"facebook": {},
+		"github": {}
+	}
 }

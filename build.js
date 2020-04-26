@@ -1,6 +1,7 @@
 const fs = require("fs-extra");
 const path = require('path');
 const execSync = require("child_process").execSync;
+const Helper = require('./Framework/Helper');
 
 class Build {
     static get BuildPath() { return path.resolve("Build") }
@@ -28,6 +29,7 @@ class Build {
     }
 
     static Run() {
+        Helper.Version.Upgrade();
         if (!fs.existsSync(this.BuildPath)) {
             this.Log('Creating Build Directory');
             fs.mkdirSync(this.BuildPath)
