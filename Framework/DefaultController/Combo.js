@@ -8,16 +8,9 @@ class Combo extends ReadOnlyControllerBase {
 
     async execute() {
         let combos = await this.getCombos();
-        try {
-            return {
-                success: true,
-                combos: combos
-            }
-        } catch (ex) {
-            return {
-                success: false,
-                message: ex.message
-            }
+        return {
+            success: true,
+            combos: combos
         }
     }
 };

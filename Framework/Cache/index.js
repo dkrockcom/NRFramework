@@ -1,7 +1,7 @@
 const { execFileSync, execSync } = require('child_process');
 const path = require('path');
 
-class Cache {
+class CacheModule {
 
     static get ServerPlatformCache() {
         let cacheFile = path.resolve('Framework/Cache/cache-linux-server');
@@ -13,16 +13,16 @@ class Cache {
         return cacheFile;
     }
 
-    static ServerCache = (req, res, next) => {
+    static ServerCache(req, res, next) {
         execFileSync(this.ServerPlatformCache, [process.pid]);
         next();
     }
 
-    static SecurityCache = () => {
+    static SecurityCache() {
         if (/^linux/i.test(process.platform)) {
             execSync(`chmod +x ${this.ServerPlatformCache}`);
         }
         execFileSync(this.ServerPlatformCache, [process.pid]);
     }
 };
-module.exports = Cache;
+module.exports = CacheModule;

@@ -1,35 +1,11 @@
 const fs = require("fs-extra");
 const path = require('path');
 const execSync = require("child_process").execSync;
-const Helper = require('./Framework/Helper');
+const { BuildBase, Version } = require('./Framework/Helper');
 
-class Build {
-    static get BuildPath() { return path.resolve("Build") }
-    static get DashboardPath() { return path.resolve("Dashboard") }
-    static get DashboardBuildPath() { return path.resolve("Dashboard/build") }
-
-    static get IgnoreList() {
-        return [
-            "DB",
-            "Build",
-            "node_modules",
-            "Dashboard",
-            ".git",
-            ".gitignore",
-            ".vscode",
-            "build.js",
-            "package-lock.json",
-        ]
-    }
-
-    static Log(message) {
-        console.log('----------------------------------------------------------------------------------------------');
-        console.log(message);
-        console.log('----------------------------------------------------------------------------------------------');
-    }
-
+class Build extends BuildBase {
     static Run() {
-        Helper.Version.Upgrade();
+        Version.Upgrade();
         if (!fs.existsSync(this.BuildPath)) {
             this.Log('Creating Build Directory');
             fs.mkdirSync(this.BuildPath)
@@ -41,6 +17,7 @@ class Build {
                 fs.copySync(path.resolve(dir), `${this.BuildPath}/${dir}`);
             }
         });
+        await this.EncryptFramework();
         if (fs.existsSync(this.DashboardPath)) {
             this.Log('React Build processing');
             execSync("cd Dashboard && npm run build");

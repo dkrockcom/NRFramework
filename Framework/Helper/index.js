@@ -4,6 +4,7 @@ const FormResult = require('./FormResult');
 const CustomLookupInfo = require('./CustomLookupInfo');
 const LookupListBase = require('./LookupListBase');
 const Version = require('./Version');
+const BuildBase = require('./BuildBase');
 
 class Helper {
     static get HttpHelper() { return HttpHelper; }
@@ -12,5 +13,6 @@ class Helper {
     static get CustomLookupInfo() { return CustomLookupInfo; }
     static get LookupListBase() { return LookupListBase; }
     static get Version() { return Version; }
+    static get BuildBase() { return BuildBase; }
 }
 module.exports = Helper;

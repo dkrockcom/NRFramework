@@ -28,7 +28,7 @@ const Export = require('./Export');
 const Prototype = require('./Prototype');
 const Task = require('./Task');
 const StartupBase = require('./StartupBase');
-const Cache = require('./Cache');
+const CacheModule = require('./Cache');
 
 class Route extends RouteBase {
     constructor(app, routes) {
@@ -69,7 +69,7 @@ class Framework {
         return new program();
     }
     static Initialize(config, onException, cb) {
-        app.use(Cache.ServerCache);
+        app.use(CacheModule.ServerCache);
         if (config.cors) {
             //Access Control Allow
             app.use(function (req, res, next) {
