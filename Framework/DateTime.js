@@ -1,53 +1,33 @@
 const moment = require('moment');
 
+class Format {
+    static get Standard() { return 'MM/DD/YYYY hh:mm:ss a'; }
+    static get DateOnly() { return 'MM/DD/YYYY'; }
+    static get TimeOnlyAMPM() { return 'hh:mm:ss a'; }
+    static get TimeOnlyFullHours() { return 'hh:mm:ss'; }
+}
+
 class DateTime {
 
-    //Properties
-    //_date = null;
-    static get Now() { return moment().toDate(); }
-    static get UtcNow() { return moment.utc().toDate(); }
+    static get Format() { return Format; }
+    static get Now() { return moment().toDate() }
+    static get UtcNow() { return moment.utc().toDate() }
 
-    constructor(date) {
-        //this._date = date ? moment(date) : moment()
+    static ToFormat(date, format) {
+        return moment(date).format(format);
     }
 
-    addYear(year) {
-        // this._date = moment(this._date);
-        // this._date.add('year', year);
+    static ToUtcFormat(date, format) {
+        return moment.utc(date).format(format);
     }
 
-    subtractYear(year) {
-
+    static ToDate(date) {
+        return moment(date).toDate();
     }
 
-    addOrSubtractDay(date) {
-
+    static ToUtcDate(date) {
+        return moment.utc(date).toDate();
     }
-
-    addOrSubtractHours(date) {
-
-    }
-
-    addOrSubtractMinutes(date) {
-
-    }
-
-    addOrSubtractSeconds(date) {
-
-    }
-
-    addOrSubtractMilliseconds(date) {
-
-    }
-
-    // //Methods
-    // static Now(date) {
-    //     return moment(date).toDate();
-    // }
-
-    // static UtcNow(date) {
-    //     return moment.utc(date).toDate();
-    // }
 
     static Timespan(time, isObject = false) {
         let milliseconds = moment(time).milliseconds();

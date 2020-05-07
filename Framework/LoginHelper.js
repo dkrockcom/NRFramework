@@ -1,6 +1,7 @@
 const Utility = require("./Utility");
 const { Query, Expression, CompareOperator, DBType } = require('./Database');;
 const HttpContext = require('./HttpContext');
+const md5 = require("md5");
 
 class LoginArgs {
     constructor() {
@@ -50,7 +51,7 @@ class LoginHelper {
     }
 
     static PasswordHash(password) {
-        return
+        return md5(password);
     }
 
     static Logout() {

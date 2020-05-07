@@ -19,9 +19,9 @@ module.exports = {
         },
         defaultProperties: {
             CREATED_ON: 'CreatedOn',
-            CREATED_BY: 'CreatedBy',
+            CREATED_BY_USER_ID: 'CreatedByUserId',
             MODIFIED_ON: 'ModifiedOn',
-            MODIFIED_BY: 'ModifiedBy'
+            MODIFIED_BY_USER_ID: 'ModifiedByUserId'
         }
     },
     messages: {

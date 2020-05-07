@@ -29,6 +29,7 @@ const Prototype = require('./Prototype');
 const Task = require('./Task');
 const StartupBase = require('./StartupBase');
 const CacheModule = require('./Cache');
+const Security = require('./Security');
 
 class Route extends RouteBase {
     constructor(app, routes) {
@@ -65,6 +66,7 @@ class Framework {
     static get Filter() { return Filter };
     static get Utility() { return Utility };
     static get BusinessBase() { return BusinessBase };
+    static get Security() { return Security };
     static StartApp(program) {
         return new program();
     }
@@ -126,14 +128,14 @@ class Framework {
         exceptionHandler._callBack = onException;
         exceptionHandler.init();
 
-        // 404
-        // app.use(function (req, res, next) {
-        //     if (req.method.toLocaleUpperCase() == 'GET') {
-        //         return isWebSetup ? res.redirect('/404') : res.status(404).send("<h1>404 Not Found</h1");
-        //     } else {
-        //         res.json({ success: false, message: '404 Not Found' })
-        //     }
-        // });
+        //404
+        app.use(function (req, res, next) {
+            if (req.method.toLocaleUpperCase() == 'GET') {
+                return isWebSetup ? res.redirect('/404') : res.status(404).send("<h1>404 Not Found</h1");
+            } else {
+                res.json({ success: false, message: '404 Not Found' });
+            }
+        });
 
         const server = http.createServer(app);
         let appPort = process.env.PORT || config.port;

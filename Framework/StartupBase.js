@@ -29,7 +29,7 @@ class StartupBase {
 
     async onExceptionLog(exception) {
         Logger.Error(exception);
-        this.onException(exception)
+        this.onException(exception);
     }
 
     async onException(error) { }

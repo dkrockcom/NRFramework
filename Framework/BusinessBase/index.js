@@ -1,17 +1,20 @@
 const { DBType } = require('./../Database');
 
-const ignoreList = ["Id", "_tableName", "_keyField"];
+const ignoreList = ["Id", "_tableName", "_keyField", "_disableDefaultField"];
+const defaultField = ["CreatedByUserId", "CreatedOn", "ModifiedByUserId", "ModifiedOn", "IsDeleted"]
 
 class BusinessBase {
     constructor() {
         this.Id = { type: DBType.int, value: null };
         this._tableName = this.TableName || this.constructor.name;
         this._keyField = this.KeyField || `${this.constructor.name}Id`;
+        this._disableDefaultField = false;
+
 
         //Default fields
-        this.CreatedBy = { type: DBType.int, value: 0 };
+        this.CreatedByUserId = { type: DBType.int, value: 0 };
         this.CreatedOn = { type: DBType.date, value: new Date() };
-        this.ModifiedBy = { type: DBType.int, value: null };
+        this.ModifiedByUserId = { type: DBType.int, value: null };
         this.ModifiedOn = { type: DBType.date, value: null };
         this.IsDeleted = { type: DBType.boolean, value: false };
     }
@@ -87,11 +90,11 @@ class BusinessBase {
     async softDelete(ids) {
         const Framework = require('./../../Framework');
         const { Query, DBType, In, ParameterInfo, Expression, CompareOperator } = Framework.Database;
-        let query = new Query(`UPDATE ${this._tableName} SET IsDeleted=@IsDeleted, ModifiedOn=@ModifiedOn, ModifiedBy=@ModifiedBy`);
+        let query = new Query(`UPDATE ${this._tableName} SET IsDeleted=@IsDeleted, ModifiedOn=@ModifiedOn, ModifiedByUserId=@ModifiedByUserId`);
         query.addParameter(new ParameterInfo("IsDeleted", true, DBType.boolean));
         query.addParameter(new ParameterInfo("ModifiedOn", new Date(), DBType.date));
         const { IsAuthenticated, Session } = Framework.HttpContext;
-        query.addParameter(new ParameterInfo("ModifiedBy", IsAuthenticated ? Session.user.UserId : 0, DBType.int));
+        query.addParameter(new ParameterInfo("ModifiedByUserId", IsAuthenticated ? Session.user.UserId : 0, DBType.int));
         query.where.and(new In(this._keyField, ids, DBType.int));
         query.where.and(new Expression("IsDeleted", CompareOperator.NotEquals, true, DBType.int));
         await query.execute();
@@ -109,6 +112,14 @@ class BusinessBase {
                 props.splice(index, 1);
             }
         });
+        if (this._disableDefaultField) {
+            defaultField.forEach(p => {
+                let index = props.findIndex(e => e === p);
+                if (index > -1) {
+                    props.splice(index, 1);
+                }
+            });
+        }
         return props;
     }
 }

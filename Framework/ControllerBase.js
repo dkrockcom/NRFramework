@@ -26,6 +26,7 @@ class ControllerBase extends IControllerBase {
         this._viewName = `vw${this.constructor.name}List`;
         this._tableName = this.constructor.name;
         this._listDataFromTable = false;
+        this._userFilterEnable = false;
 
         this._action = '';
         this._start = null;
@@ -61,6 +62,13 @@ class ControllerBase extends IControllerBase {
         //set HttpHelper
         this.httpHelper = new HttpHelper(req, res, next);
 
+        const Business = require('./../Business');
+        if (Business[this.constructor.name]) {
+            this._context = null;
+            let businessObject = new Business[this.constructor.name];
+            this._context = businessObject;
+        }
+
         //Authentication check
         if (this._isAuthEnabled && !HttpContext.IsAuthenticated) {
             this._res.statusCode = 401;//440; Temporary Change
@@ -94,14 +102,14 @@ class ControllerBase extends IControllerBase {
         if (this._context.hasOwnProperty(controller.defaultProperties.CREATED_ON) && !isUpdate) {
             this._context[controller.defaultProperties.CREATED_ON].value = new Date();
         }
-        if (this._context.hasOwnProperty(controller.defaultProperties.CREATED_BY) && !isUpdate) {
-            this._context[controller.defaultProperties.CREATED_BY].value = this.getUserId();
+        if (this._context.hasOwnProperty(controller.defaultProperties.CREATED_BY_USER_ID) && !isUpdate) {
+            this._context[controller.defaultProperties.CREATED_BY_USER_ID].value = this.getUserId();
         }
         if (this._context.hasOwnProperty(controller.defaultProperties.MODIFIED_ON) && isUpdate) {
             this._context[controller.defaultProperties.MODIFIED_ON].value = new Date();
         }
-        if (this._context.hasOwnProperty(controller.defaultProperties.MODIFIED_BY) && isUpdate) {
-            this._context[controller.defaultProperties.MODIFIED_BY].value = this.getUserId();
+        if (this._context.hasOwnProperty(controller.defaultProperties.MODIFIED_BY_USER_ID) && isUpdate) {
+            this._context[controller.defaultProperties.MODIFIED_BY_USER_ID].value = this.getUserId();
         }
     }
 
@@ -172,6 +180,11 @@ class ControllerBase extends IControllerBase {
                 if (this._listDataFromTable) {
                     query.where.and(new Expression("IsDeleted", CompareOperator.Equals, false, DBType.boolean));
                     recordCountQuery.where.and(new Expression("IsDeleted", CompareOperator.Equals, false, DBType.boolean));
+                }
+
+                if (this._userFilterEnable && !SecurityHelper.IsAdmin) {
+                    query.where.and(new Expression("CreatedByUserId", CompareOperator.Equals, HttpContext.UserId, DBType.int));
+                    recordCountQuery.where.and(new Expression("CreatedByUserId", CompareOperator.Equals, HttpContext.UserId, DBType.int));
                 }
 
                 if (this._start !== null && this._limit !== null) {

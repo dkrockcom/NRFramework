@@ -1,15 +1,15 @@
 const HttpContext = require("./../HttpContext");
-const Utility = require("./../Utility");
 
 class SecurityHelper {
     static get RoleAdmin() { return "Admin" }
     static get RoleSuperAdmin() { return "SuperAdmin" }
     static get IsAuthenticated() { return HttpContext.IsAuthenticated }
-    static get IsAdmin() { return Utility.Contains(HttpContext.Roles, this.RoleAdmin) || Utility.Contains(HttpContext.Roles, this.RoleSuperAdmin); }
-    static get IsSuperAdmin() { return Utility.Contains(HttpContext.Roles, this.RoleSuperAdmin); }
+    static get IsAdmin() { return this.IsInRole(this.RoleAdmin); }
+    static get IsSuperAdmin() { return this.IsInRole(this.RoleAdmin) || this.IsInRole(this.RoleSuperAdmin); }
 
     static IsInRole(role) {
-        return !Utility.isNullOrEmpty(HttpContext.Roles.find(e => e === role));
+        let result = HttpContext.Roles.findIndex(e => e.RoleName.toLocaleLowerCase() === role.toLocaleLowerCase()) > -1
+        return result;
     }
 
     static HasAccess(requiredRoles) {

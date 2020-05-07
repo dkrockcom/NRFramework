@@ -5,6 +5,7 @@ const CustomLookupInfo = require('./CustomLookupInfo');
 const LookupListBase = require('./LookupListBase');
 const Version = require('./Version');
 const BuildBase = require('./BuildBase');
+const FilterInfo = require('./FilterInfo');
 
 class Helper {
     static get HttpHelper() { return HttpHelper; }
@@ -14,5 +15,6 @@ class Helper {
     static get LookupListBase() { return LookupListBase; }
     static get Version() { return Version; }
     static get BuildBase() { return BuildBase; }
+    static get FilterInfo() { return FilterInfo; }
 }
 module.exports = Helper;

@@ -24,6 +24,7 @@ class HttpContext {
     static get Next() { return Util.getCLSHook('Next') }
     static get Session() { return Util.getCLSHook('Session') }
     static get IsAuthenticated() { return HttpContext.Session && HttpContext.Session.isAuthenticated }
+    static get UserId() { return HttpContext.Session && HttpContext.Request.session.UserId }
     static get Roles() { return HttpContext.Session && HttpContext.Session.Roles || [] }
     static get Modules() { return HttpContext.Session && HttpContext.Session.Modules || [] }
     //static get Identity() { return Util.getCLSHook('Identity') }
@@ -43,6 +44,7 @@ class HttpContext {
             signed: true // Indicates if the cookie should be signed
         }
         HttpContext.Request.session.user = user;
+        HttpContext.Request.session.UserId = user.UserId;
         HttpContext.Request.session.Roles = roles || [];
         HttpContext.Request.session.Modules = [];
         HttpContext.Request.session.isAuthenticated = true;

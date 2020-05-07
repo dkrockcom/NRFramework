@@ -1,29 +1,42 @@
 const ReadOnlyControllerBase = require('./../ReadOnlyControllerBase');
-// const { Query, Expression, CompareOperator, DBType, ParameterInfo } = require('./../Database');
+const { Query, Expression, CompareOperator, DBType, ParameterInfo } = require('./../Database');
 // const Mail = new (require('./../Mail'));
-// const Utility = require('./../Utility');
+const Utility = require('./../Utility');
+const HttpContext = require('./../HttpContext');
+const Logger = require('./../Logger');
 
-//Implementation Pending
+
 class ChangePassword extends ReadOnlyControllerBase {
-    // constructor() {
-    //     super();
-    //     this._isAuthEnabled = false;
-    // }
+    _isAuthEnabled = true;
 
-    // execute(http) {
-    //     let action = http.Params['forgot'];
-    //     switch (action) {
-    //         case 'forgot':
-
-    //             break;
-
-    //         case 'forgot':
-
-    //             break;
-
-    //         default:
-    //             break;
-    //     }
-    // }
+    async execute(http) {
+        try {
+            let _query = new Query("SELECT UserId FROM User");
+            _query.where.and(new Expression("Password", CompareOperator.Equals, Utility.generateHash(http.Params.Password), DBType.string));
+            _query.where.and(new Expression("UserId", CompareOperator.Equals, HttpContext.UserId, DBType.int));
+            let result = await _query.execute();
+            if (result && result.length > 0) {
+                _query = new Query("UPDATE User SET Password=@Password");
+                _query.addParameter(new ParameterInfo("Password", Utility.generateHash(http.Params.NewPassword), DBType.string));
+                _query.where.and(new Expression("UserId", CompareOperator.Equals, HttpContext.UserId, DBType.int));
+                result = await _query.execute();
+                return {
+                    success: true,
+                    message: 'Password Successully changed'
+                }
+            } else {
+                return {
+                    success: false,
+                    message: 'Wrong Password'
+                }
+            }
+        } catch (ex) {
+            Logger.Error(ex);
+            return {
+                success: false,
+                message: ex.message
+            }
+        }
+    }
 };
 module.exports = ChangePassword;
