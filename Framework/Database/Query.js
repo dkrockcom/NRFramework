@@ -10,6 +10,7 @@ class Query {
         this._parameters = [];
         this._timeout = timeout;
         this._config = config;
+        this._rawParameters = [];
         this.where = {
             and: this.and.bind(this),
             or: this.or.bind(this),
@@ -17,6 +18,7 @@ class Query {
         };
         this.orderBy = null;
         this.connectionPool = ConnectionPool(Object.assign({}, Utility.AppSetting.dbConfig, this._config));
+        this.type = 'table';
     };
 
     and(expression) {
@@ -108,7 +110,7 @@ class Query {
     async execute() {
         try {
             let queryInfo = this.getQuery();
-            return await this.connectionPool.query(`${queryInfo.query} ${this._extra}`, queryInfo.parameters);
+            return await this.connectionPool.query(`${queryInfo.query} ${this._extra}`, [...queryInfo.parameters, ...this._rawParameters]);
         } catch (ex) {
             throw new Error(ex);
         } finally {

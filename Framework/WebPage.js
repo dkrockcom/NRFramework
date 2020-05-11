@@ -6,6 +6,7 @@ class WebPage {
         this.pageLoad = this.pageLoad.bind(this);
         this.route = "";
         this.httpHelper = null;
+        this.data = {};
     }
 
     async init(req, res, next) {
