@@ -1,6 +1,8 @@
 const ControllerBase = require('../ControllerBase');
 const Utility = require('./../Utility');
 const LoginHelper = require('./../LoginHelper');
+const HttpContext = require('./../HttpContext');
+const { Query, CompareOperator, DBType, Expression } = require('./../Database');
 
 class Login extends ControllerBase {
     constructor() {
@@ -28,9 +30,12 @@ class Login extends ControllerBase {
         args.Password = Utility.generateHash(http.Params["Password"]);
         let resp = await LoginHelper.Login(args);
         if (resp.Success) {
+            let query = new Query("SELECT * FROM vwuserlist");
+            query.where.and(new Expression("UserId", CompareOperator.Equals, HttpContext.UserId, DBType.int));
+            let data = await query.execute();
             response.success = true;
             response.roles = http.Session.Roles;
-            response.user = http.Session.user;
+            response.user = data.length > 0 ? data[0] : {};
             response.message = "Logged In";
         } else {
             response.message = "Please Enter Valid credentials";
