@@ -1,6 +1,7 @@
 const ConnectionPool = require('./ConnectionPool');
 const DBType = require('./DBType');
 const Utility = require('./../Utility');
+const CompareOperator = require('./CompareOperator');
 
 class Query {
     constructor(query, config = {}, timeout = 30000) {
@@ -99,7 +100,18 @@ class Query {
                     break;
             }
             this._query = this._query.replace(`@${params._field}`, '?')
-            this._parameters.push(value);
+            if (params._operator &&
+                params._operator == CompareOperator.Like ||
+                params._operator == CompareOperator.Contains ||
+                params._operator == CompareOperator.StartsWith ||
+                params._operator == CompareOperator.EndsWith ||
+                params._operator == CompareOperator.NotLike ||
+                params._operator == CompareOperator.NotContains
+            ) {
+                this._parameters.push(`%${value}%`);
+            } else {
+                this._parameters.push(value);
+            }
         });
         return {
             query: `${this._query} ${this.orderBy ? 'ORDER BY ' + this.orderBy : ''}`,
@@ -110,7 +122,8 @@ class Query {
     async execute() {
         try {
             let queryInfo = this.getQuery();
-            return await this.connectionPool.query(`${queryInfo.query} ${this._extra}`, [...queryInfo.parameters, ...this._rawParameters]);
+            let qry = `${queryInfo.query} ${this._extra}`;
+            return await this.connectionPool.query(qry, [...queryInfo.parameters, ...this._rawParameters]);
         } catch (ex) {
             throw new Error(ex);
         } finally {

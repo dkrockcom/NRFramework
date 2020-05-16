@@ -51,7 +51,7 @@ class Expression {
         //         ConditionPrefix = "NOT";
         //         break;
         // }
-        query.addParameter(new ParameterInfo(this._field, this._value, this._dbType));
+        query.addParameter(new ParameterInfo(this._field, this._value, this._dbType,  this._operator));
         // query.addParameter(this.getValue());
         let isFirst = query._query.indexOf('WHERE') > -1;
         if (type == "ADD") {
