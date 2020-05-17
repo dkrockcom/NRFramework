@@ -1,4 +1,5 @@
 const { DBType } = require('./../Database');
+const Utility = require("./../Utility");
 
 const ignoreList = ["Id", "_tableName", "_keyField", "_disableDefaultField"];
 const defaultField = ["CreatedByUserId", "CreatedOn", "ModifiedByUserId", "ModifiedOn", "IsDeleted"]
@@ -10,6 +11,7 @@ class BusinessBase {
         this._keyField = this.KeyField || `${this.constructor.name}Id`;
         this._disableDefaultField = false;
 
+        this._tableName = Utility.AppSetting["dbUseLowerCase"] ? this._tableName.toLowerCase() : this._tableName;
 
         //Default fields
         this.CreatedByUserId = { type: DBType.int, value: 0 };

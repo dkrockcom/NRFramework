@@ -3,6 +3,7 @@ const fs = require("fs");
 const cls = require('cls-hooked');
 const ns = cls.createNamespace("Request-Context-5195409c4e8d71bf5dd408342f5942bb");
 const path = require('path');
+const Logger = require('./Logger');
 
 class Utility {
     static get AppSetting() {
@@ -94,6 +95,23 @@ class Utility {
     static get AbsoluteUrl() {
         const HttpContext = require('./HttpContext');
         return `${HttpContext.Request.protocol}://${HttpContext.Request.headers.host}`
+    }
+
+    static LowerCaseTableName(sql) {
+        try {
+            let result = sql.match(/(from|join|FROM|JOIN)\s+(\w+)/g);
+            if (result && result.length > 0) {
+                let tableNameList = result.map(e => e.split(' ')[1]);
+                if (tableNameList.length > 0) {
+                    tableNameList.forEach(table => {
+                        sql = sql.replace(new RegExp(table, 'g'), table.toLowerCase());
+                    });
+                }
+            }
+        } catch (ex) {
+            Logger.Error(ex);
+        }
+        return sql;
     }
 }
 module.exports = Utility;

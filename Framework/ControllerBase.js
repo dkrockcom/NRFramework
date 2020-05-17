@@ -128,20 +128,20 @@ class ControllerBase extends IControllerBase {
                     await this._context.load(this._id);
                     this.setProperties(isUpdate);
                     await this._context.save(this._id);
-                    await this.afterSave(http);
+                    await this.afterSave(http, this._context);
                     this.response(true, 'Record sucessfully updated.', this._context);
 
                 } else {
                     this.setProperties(isUpdate);
                     await this._context.save();
-                    await this.afterSave(http);
+                    await this.afterSave(http, this._context);
                     this.response(true, 'Record successfully created.', this._context);
                 }
                 break;
 
             case controller.action.LOAD:
                 comboData = await this.getCombos();
-                let checkRecord = new Query(`SELECT ${this._context._keyField} FROM ${this._context._tableName}`);
+                let checkRecord = new Query(`SELECT ${this._context._keyField} FROM ${this.getTableName()}`);
                 checkRecord.where.add(new Expression(this._context._keyField, CompareOperator.Equals, this._id, DBType.int));
                 let obj = await checkRecord.execute();
                 if (obj.length > 0) {
@@ -255,7 +255,9 @@ class ControllerBase extends IControllerBase {
     }
 
     getTableName() {
-        return this._listDataFromTable ? this._tableName : this._viewName;
+        let tableName = this._listDataFromTable ? this._tableName : this._viewName;
+        tableName = Utility.AppSetting["dbUseLowerCase"] ? tableName.toLowerCase() : tableName;
+        return tableName;
     }
 
     async getCombos() {

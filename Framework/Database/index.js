@@ -5,8 +5,10 @@ const DBType = require('./DBType');
 const { Between, NotBetween } = require('./Expression/Between');
 const { In, NotIn } = require('./Expression/In');
 const ParameterInfo = require('./ParameterInfo');
+const Utility = require("./../Utility");
 
 class DB {
+    static get UseDBLowerCase() { return Utility.AppSetting["dbUseLowerCase"] }
     static get Query() { return Query; }
     static get ParameterInfo() { return ParameterInfo; }
     static get CompareOperator() { return CompareOperator; }

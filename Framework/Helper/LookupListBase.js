@@ -12,7 +12,7 @@ class LookupListBase {
     async LoadCombo() {
         let results = [];
         if (this.comboList.length > 0) {
-            let lookupQuery = new Query(`SELECT LookupTypeId, LookupType FROM LookupType`);
+            let lookupQuery = new Query(`SELECT LookupTypeId, LookupType FROM ${Utility.AppSetting["dbUseLowerCase"] ? 'lookuptype' : 'LookupType'}`);
             lookupQuery.where.add(new In("LookupType", this.comboList, DBType.string));
             results = await lookupQuery.execute();
         }
@@ -55,7 +55,7 @@ class LookupListBase {
     }
 
     async getComboData(LookupTypeId) {
-        let query = new Query(`SELECT LookupId, DisplayValue FROM Lookup`);
+        let query = new Query(`SELECT LookupId, DisplayValue FROM ${Utility.AppSetting["dbUseLowerCase"] ? 'lookup' : 'Lookup'}`);
         query.where.and(new Expression("LookupTypeId", CompareOperator.Equals, LookupTypeId, DBType.int));
         query.orderBy = "SortOrder";
         return await query.execute();

@@ -1,5 +1,5 @@
 const ReadOnlyControllerBase = require('./../ReadOnlyControllerBase');
-const { Query, Expression, CompareOperator, DBType, ParameterInfo } = require('./../Database');
+const { Query, Expression, CompareOperator, DBType, ParameterInfo, UseDBLowerCase } = require('./../Database');
 const Mail = new (require('./../Mail'));
 const Utility = require('./../Utility');
 
@@ -11,6 +11,7 @@ class ForgotPassword extends ReadOnlyControllerBase {
 
     async execute(http) {
         let response = { success: false, message: '' };
+        let userTable = UseDBLowerCase ? "user" : 'User';
         try {
             let email = http.Params["Email"];
             if (Utility.isNullOrEmpty(email)) {
@@ -18,7 +19,7 @@ class ForgotPassword extends ReadOnlyControllerBase {
                 return http.Response.json(response);
             }
             email = email.trim();
-            let qry = new Query("SELECT UserId FROM User");
+            let qry = new Query(`SELECT UserId FROM ${userTable}`);
             qry.where.and(new Expression("Email", CompareOperator.Equals, email, DBType.string));
             qry.orderBy = " UserId DESC LIMIT 1";
             let result = await qry.execute();
@@ -26,7 +27,7 @@ class ForgotPassword extends ReadOnlyControllerBase {
                 result = result[0];
 
                 let hash = Utility.generateUUID();
-                let updateUser = new Query("UPDATE User SET PassKey=@PassKey,PasswordResetRequestOn=@PasswordResetRequestOn");
+                let updateUser = new Query(`UPDATE ${userTable} SET PassKey=@PassKey,PasswordResetRequestOn=@PasswordResetRequestOn`);
                 updateUser.addParameter(new ParameterInfo("PassKey", hash, DBType.string));
                 updateUser.addParameter(new ParameterInfo("PasswordResetRequestOn", new Date(), DBType.date));
                 updateUser.where.and(new Expression("UserId", CompareOperator.Equals, result.UserId, DBType.int));

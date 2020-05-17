@@ -1,5 +1,5 @@
 const Utility = require("./Utility");
-const { Query, Expression, CompareOperator, DBType } = require('./Database');;
+const { Query, Expression, CompareOperator, DBType, UseDBLowerCase } = require('./Database');;
 const HttpContext = require('./HttpContext');
 const md5 = require("md5");
 
@@ -24,7 +24,7 @@ class LoginHelper {
     static get LoginResponse() { return LoginResponse }
     static async Login(loginArgs) {
         let loginResponse = new LoginResponse();
-        let query = new Query("SELECT * FROM User");
+        let query = new Query(`SELECT * FROM ${UseDBLowerCase ? 'user' : 'User'}`);
         let args = Object.keys(loginArgs);
         if (args.length > 0) {
             args.forEach(arg => {
@@ -38,6 +38,11 @@ class LoginHelper {
                 result = result[0];
                 let userRoles = new Query("SELECT Role.RoleId, Role.RoleName FROM UserRole LEFT OUTER JOIN Role ON UserRole.RoleId = Role.RoleId");
                 userRoles.where.and(new Expression("UserRole.UserId", CompareOperator.Equals, result.UserId, DBType.int));
+                if (UseDBLowerCase) {
+                    userRoles = new Query("SELECT role.RoleId, role.RoleName FROM userrole LEFT OUTER JOIN role ON userrole.RoleId = role.RoleId");
+                    userRoles.where.and(new Expression("userrole.UserId", CompareOperator.Equals, result.UserId, DBType.int));
+                }
+
                 userRoles = await userRoles.execute();
                 delete result["Password"];
                 loginResponse.Success = isUserFound;

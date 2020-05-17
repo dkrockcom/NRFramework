@@ -123,6 +123,8 @@ class Query {
         try {
             let queryInfo = this.getQuery();
             let qry = `${queryInfo.query} ${this._extra}`;
+            //qry = Utility.AppSetting["dbUseLowerCase"] ? Utility.LowerCaseTableName(qry) : qry;
+            console.log(qry);
             return await this.connectionPool.query(qry, [...queryInfo.parameters, ...this._rawParameters]);
         } catch (ex) {
             throw new Error(ex);
