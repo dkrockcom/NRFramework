@@ -141,18 +141,14 @@ class ControllerBase extends IControllerBase {
 
             case controller.action.LOAD:
                 comboData = await this.getCombos();
-                let checkRecord = new Query(`SELECT ${this._context._keyField} FROM ${this.getTableName()}`);
+                let checkRecord = new Query(`SELECT * FROM ${this.getTableName()}`);
                 checkRecord.where.add(new Expression(this._context._keyField, CompareOperator.Equals, this._id, DBType.int));
                 let obj = await checkRecord.execute();
                 if (obj.length > 0) {
-                    await this._context.load(this._id);
+                    obj = obj[0];
                     let record = {};
-                    let businessProps = this._context.getProperties();
-                    businessProps.forEach(field => {
-                        record[field] = this._context[field].value;
-                    });
-                    record[this._context._keyField] = record["Id"] = this._context.Id.value;
-                    this.response(true, "Record Loaded", { data: record, combos: comboData });
+                    record["Id"] = Number(obj[this._context._keyField]);
+                    this.response(true, "Record Loaded", { data: { ...obj, ...record }, combos: comboData });
                 } else {
                     this.response(false, "Record not exists", { data: null, combos: comboData });
                 }

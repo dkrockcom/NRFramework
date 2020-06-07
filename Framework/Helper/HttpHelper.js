@@ -28,6 +28,9 @@ class HttpHelper {
         // }
         return _params;
     }
+    get AbsoluteUrl() {
+        return `${this._request.protocol}://${this._request.headers.host}`
+    }
     get IsAuthenticated() { return HttpContext.IsAuthenticated }
 }
 module.exports = HttpHelper;

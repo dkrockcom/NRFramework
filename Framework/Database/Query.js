@@ -2,6 +2,7 @@ const ConnectionPool = require('./ConnectionPool');
 const DBType = require('./DBType');
 const Utility = require('./../Utility');
 const CompareOperator = require('./CompareOperator');
+const DateTime = require('./../DateTime');
 
 class Query {
     constructor(query, config = {}, timeout = 30000) {
@@ -74,11 +75,11 @@ class Query {
                     if (Array.isArray(params._value)) {
                         let tempValue = [];
                         params._value.forEach(iv => {
-                            tempValue.push(new Date(iv));
+                            tempValue.push(DateTime.ToDate(iv, DateTime.Format.MySqlDate));
                         });
                         value = tempValue;
                     } else {
-                        value = params._value ? new Date(params._value) : params._value;
+                        value = params._value ? DateTime.ToDate(params._value, DateTime.Format.MySqlDate) : params._value;
                     }
                     break;
 
@@ -124,7 +125,7 @@ class Query {
             let queryInfo = this.getQuery();
             let qry = `${queryInfo.query} ${this._extra}`;
             //qry = Utility.AppSetting["dbUseLowerCase"] ? Utility.LowerCaseTableName(qry) : qry;
-            console.log(qry);
+            console.log(qry, [...queryInfo.parameters, ...this._rawParameters]);
             return await this.connectionPool.query(qry, [...queryInfo.parameters, ...this._rawParameters]);
         } catch (ex) {
             throw new Error(ex);

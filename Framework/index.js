@@ -96,7 +96,7 @@ class Framework {
             keys: [config.appName],
             secret: config.appName,
             // Cookie Options
-            maxAge: config.sessionTimeout || 24 * 60 * 60 * 1000, // 24 hours
+            maxAge: config.sessionTimeout || 86400, // 24 hours in seconds
             path: "/"
         }));
 

@@ -1,4 +1,5 @@
-const { Query, Expression, CompareOperator, DBType } = require('./Database');
+const { Query, Expression, CompareOperator, DBType, Between } = require('./Database');
+const DateTime = require('./DateTime');
 
 class Filter {
     constructor(filters, query) {
@@ -20,7 +21,9 @@ class Filter {
                     break;
 
                 case DBType.date:
-                    this._query.where[`${isFirst ? 'add' : 'and'}`](new Expression(filter.field, filter.operator, filter.value, DBType.date));
+                    let start = DateTime.ToDate(filter.value, DateTime.Time.MIN);
+                    let end =  DateTime.ToDate(filter.value, DateTime.Time.MAX);
+                    this._query.where[`${isFirst ? 'add' : 'and'}`](new Between(filter.field, start, end, DBType.date));
                     break;
 
                 case DBType.boolean:

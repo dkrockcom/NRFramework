@@ -3,12 +3,20 @@ const moment = require('moment');
 class Format {
     static get Standard() { return 'MM/DD/YYYY hh:mm:ss a'; }
     static get DateOnly() { return 'MM/DD/YYYY'; }
+    static get MySqlDateTime() { return 'YYYY-MM-DD hh:mm:ss'; }
+    static get MySqlDate() { return 'YYYY-MM-DD'; }
     static get TimeOnlyAMPM() { return 'hh:mm:ss a'; }
     static get TimeOnlyFullHours() { return 'hh:mm:ss'; }
 }
 
+class Time {
+    static get MAX() { return 'MAX'; }
+    static get MIN() { return 'MIN'; }
+}
+
 class DateTime {
 
+    static get Time() { return Time; }
     static get Format() { return Format; }
     static get Now() { return moment().toDate() }
     static get UtcNow() { return moment.utc().toDate() }
@@ -21,7 +29,17 @@ class DateTime {
         return moment.utc(date).format(format);
     }
 
-    static ToDate(date) {
+    static ToDate(date, time) {
+        let dateValue = moment(date);
+        if (time) {
+            if (time == Time.MAX) {
+                dateValue.set({ hours: 24, minutes: 0, seconds: 0, millisecond: 0 });
+                return dateValue.toDate();
+            } else {
+                dateValue.set({ hours: 0, minutes: 0, seconds: 0, millisecond: 0 });
+                return dateValue.toDate();
+            }
+        }
         return moment(date).toDate();
     }
 

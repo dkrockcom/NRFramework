@@ -15,7 +15,7 @@ class ReadOnlyControllerBase {
         this.httpHelper = new HttpHelper(req, res, next);
         if (this._isAuthEnabled && !HttpContext.IsAuthenticated) {
             res.statusCode = 401;
-            this.response(false, messages.AUTH_FAILED);
+            this.response(false, messages.UNAUTHORIZED_ACCESS);
             return;
         }
         let toReturn = this.execute && await this.execute(this.httpHelper);

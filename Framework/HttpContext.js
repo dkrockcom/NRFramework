@@ -23,7 +23,7 @@ class HttpContext {
     static get Response() { return Util.getCLSHook('Response') }
     static get Next() { return Util.getCLSHook('Next') }
     static get Session() { return Util.getCLSHook('Session') }
-    static get IsAuthenticated() { return HttpContext.Session && HttpContext.Session.isAuthenticated }
+    static get IsAuthenticated() { return HttpContext.Session && HttpContext.Session.isAuthenticated || false }
     static get UserId() { return HttpContext.Session && HttpContext.Session.UserId }
     static get Roles() { return HttpContext.Session && HttpContext.Session.Roles || [] }
     static get Modules() { return HttpContext.Session && HttpContext.Session.Modules || [] }
