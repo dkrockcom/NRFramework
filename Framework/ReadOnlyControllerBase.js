@@ -6,10 +6,10 @@ const path = require('path');
 const { controller, messages } = require('./DFEnum');
 
 class ReadOnlyControllerBase {
-    constructor() {
-        this.httpHelper = null;
-        this._isAuthEnabled = true;
-    }
+
+    httpHelper = null;
+    _isAuthEnabled = true;
+    _routeParams = [];
 
     async init(req, res, next) {
         this.httpHelper = new HttpHelper(req, res, next);

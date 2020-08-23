@@ -15,11 +15,23 @@ class WebPageRoute {
             .post(dpc.init.bind(dpc));
     }
 
+    getRouteRouteParams(params) {
+        let rpString = '';
+        params.forEach(item => {
+            rpString += `/:${item.name}${item.required ? '' : '?'}`;
+        });
+        return rpString;
+    }
+
     setView(route, dir) {
-        let r = `.${(route ? route : './Web/')}${dir}/`;
+        let r = `.${(route ? route : './Web/')}${dir}`;
         let pclass = new (require(r))();
         pclass.route = r;
-        this.app.route(r.split("Web/Pages")[1])
+        let routeRouteParams = '';
+        if (pclass._routeParams && pclass._routeParams.length > 0) {
+            routeRouteParams = this.getRouteRouteParams(pclass._routeParams);
+        }
+        this.app.route(`${r.split("Web/Pages")[1]}${routeRouteParams}`)
             .get(pclass.init.bind(pclass))
             .post(pclass.init.bind(pclass));
     }
