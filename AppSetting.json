@@ -6,18 +6,17 @@
 	"staticPath": "public",
 	"apiPrefix": "api",
 	"cors": true,
-	"dbType": "mysql",
+	"dbType": "mongodb",
 	"controllers": [],
 	"multerOptions": null,
 	"autoDatabaseSetup": true,
 	"disableWeb": false,
 	"dbConfig": {
-		"connectionLimit": 10,
+		"uri": "mongodb://localhost:27017/test",
 		"host": "localhost",
 		"user": "root",
 		"password": "123456",
-		"database": "framework",
-		"multipleStatements": true
+		"database": "framework"
 	},
 	"sessionTimeout": 86400,
 	"smtpConfig": {

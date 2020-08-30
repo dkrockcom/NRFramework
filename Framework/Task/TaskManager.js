@@ -37,5 +37,30 @@ class TaskManager {
             activeTask.task.running && activeTask.task.stop();
         }
     }
+
+    static StartAll(name) {
+        this.ActiveTask.forEach(taskRecord => {
+            if (!taskRecord.task.running) {
+                taskRecord.task.start();
+            }
+        });
+    }
+
+    static StopAll() {
+        this.ActiveTask.forEach(taskRecord => {
+            if (taskRecord.task.running) {
+                taskRecord.task.stop();
+            }
+        });
+    }
+
+    static RemoveAll() {
+        this.ActiveTask.forEach(taskRecord => {
+            if (taskRecord.task.running) {
+                taskRecord.task.stop();
+            }
+        });
+        this.ActiveTask = [];
+    }
 }
 module.exports = TaskManager;

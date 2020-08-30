@@ -58,6 +58,5 @@ class ReadOnlyControllerBase {
         LookupList.comboList = this.httpHelper.Params["combos"];
         return await LookupList.LoadCombo();
     }
-
 }
 module.exports = ReadOnlyControllerBase;

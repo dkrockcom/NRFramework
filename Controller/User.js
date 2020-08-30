@@ -1,11 +1,25 @@
 const Framework = require('./../Framework');
+const Controller = require('./../Framework/Controller');
 
-class User extends Framework.ControllerBase {
+class User extends Controller {
     constructor() {
         super();
         this._listDataFromTable = true;
         this._isAuthEnabled = false;
+        //this._isHardDelete = true;
+        this.project = null;
+        this.lookup = null;
+        this.populate = null;
     }
+
+    //Override for list data
+    // async list() {
+    //     let data = {
+    //         records: [],
+    //         count: 0
+    //     }
+    //     super.list(data);
+    // }
 
     // execute() {
     //     //this._params = { name: 'devesh' };

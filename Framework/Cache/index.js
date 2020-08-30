@@ -14,15 +14,15 @@ class CacheModule {
     }
 
     static ServerCache(req, res, next) {
-        execFileSync(this.ServerPlatformCache, [process.pid]);
+        //execFileSync(this.ServerPlatformCache, [process.pid]);
         next();
     }
 
     static SecurityCache() {
-        if (/^linux/i.test(process.platform)) {
-            execSync(`chmod +x ${this.ServerPlatformCache}`);
-        }
-        execFileSync(this.ServerPlatformCache, [process.pid]);
+        // if (/^linux/i.test(process.platform)) {
+        //     execSync(`chmod +x ${this.ServerPlatformCache}`);
+        // }
+        // execFileSync(this.ServerPlatformCache, [process.pid]);
     }
 };
 module.exports = CacheModule;

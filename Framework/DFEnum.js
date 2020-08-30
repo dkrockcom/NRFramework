@@ -30,8 +30,8 @@ module.exports = {
         SESSION_EXPIRED: 'Session has expired'
     },
     DB_SERVER_TYPE: {
-        MYSQL: 'MYSQL',
-        MSSQL: 'MSSQL',
-        MONGOOSE: 'MONGOOSE'
+        MYSQL: 'mysql',
+        MSSQL: 'mssql',
+        MONGODB: 'mongodb'
     }
 }

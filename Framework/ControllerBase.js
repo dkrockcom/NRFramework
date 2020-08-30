@@ -1,4 +1,4 @@
-const { controller, messages } = require('./DFEnum');
+const { controller, messages, DB_SERVER_TYPE } = require('./DFEnum');
 const { Query, Expression, CompareOperator, DBType } = require('./Database');
 const Filter = require('./Filter');
 const HttpContext = require('./HttpContext');
@@ -8,6 +8,9 @@ const path = require('path');
 const Utility = require("./Utility");
 const SecurityHelper = require("./Security/SecurityHelper");
 const { Excel, CSV, PDF } = require('./Export');
+const Business = require('./../Business');
+const mongoose = require('mongoose');
+const Logger = require('./Logger');
 
 class IControllerBase {
     async afterSave() { };
@@ -61,13 +64,7 @@ class ControllerBase extends IControllerBase {
 
         //set HttpHelper
         this.httpHelper = new HttpHelper(req, res, next);
-
-        const Business = require('./../Business');
-        if (Business[this.constructor.name]) {
-            this._context = null;
-            let businessObject = new Business[this.constructor.name];
-            this._context = businessObject;
-        }
+        this._context = this.Business;
 
         //Authentication check
         if (this._isAuthEnabled && !HttpContext.IsAuthenticated) {
@@ -82,7 +79,36 @@ class ControllerBase extends IControllerBase {
             this.response(false, messages.UNAUTHORIZED_ACCESS);
             return;
         }
-        this.execute(this.httpHelper);
+        this.execute && this.execute(this.httpHelper);
+    }
+
+    get Model() {
+        return mongoose.model(this.constructor.name); // Business[this.constructor.name].Model;
+    }
+
+    get Business() {
+        let context = null;
+        if (Business[this.constructor.name]) {
+            switch (Utility.AppSetting.dbType) {
+
+                case DB_SERVER_TYPE.MONGODB:
+                    context = new Business[this.constructor.name];
+                    break;
+
+                case DB_SERVER_TYPE.MYSQL:
+                    context = new Business[this.constructor.name];
+                    break;
+
+                case DB_SERVER_TYPE.MSSQL:
+                    //TODO: Implementation pending
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        return context;
     }
 
     getUserId() {
@@ -90,142 +116,62 @@ class ControllerBase extends IControllerBase {
     }
 
     setProperties(isUpdate) {
-        let businessProps = this._context.getProperties();
+        let businessProps = Utility.isMongoDB ? Object.keys(this._context) : this._context.getProperties();
         businessProps.forEach(bp => {
             if (this._params[bp]) {
-                this._context[bp].value = this._params[bp];
+                if (Utility.isMongoDB) {
+                    this._context[bp] = this._params[bp];
+                } else {
+                    this._context[bp].value = this._params[bp];
+                }
             }
         });
 
         const { controller } = require('./DFEnum');
 
         if (this._context.hasOwnProperty(controller.defaultProperties.CREATED_ON) && !isUpdate) {
-            this._context[controller.defaultProperties.CREATED_ON].value = new Date();
+            if (Utility.isMongoDB) {
+                this._context[controller.defaultProperties.CREATED_ON] = new Date();
+            } else {
+                this._context[controller.defaultProperties.CREATED_ON].value = new Date();
+            }
         }
         if (this._context.hasOwnProperty(controller.defaultProperties.CREATED_BY_USER_ID) && !isUpdate) {
-            this._context[controller.defaultProperties.CREATED_BY_USER_ID].value = this.getUserId();
+            if (Utility.isMongoDB) {
+                this._context[controller.defaultProperties.CREATED_BY_USER_ID] = this.getUserId();
+            } else {
+                this._context[controller.defaultProperties.CREATED_BY_USER_ID].value = this.getUserId();
+            }
         }
         if (this._context.hasOwnProperty(controller.defaultProperties.MODIFIED_ON) && isUpdate) {
-            this._context[controller.defaultProperties.MODIFIED_ON].value = new Date();
+            if (Utility.isMongoDB) {
+                this._context[controller.defaultProperties.MODIFIED_ON] = new Date();
+            } else {
+                this._context[controller.defaultProperties.MODIFIED_ON].value = new Date();
+            }
         }
         if (this._context.hasOwnProperty(controller.defaultProperties.MODIFIED_BY_USER_ID) && isUpdate) {
-            this._context[controller.defaultProperties.MODIFIED_BY_USER_ID].value = this.getUserId();
-        }
-    }
-
-    async execute(http) {
-        let comboData = {};
-        switch (this._action.toUpperCase()) {
-            case controller.action.SAVE:
-                let isUpdate = false;
-                await this.beforeSave(this.httpHelper);
-                if (this._id && (this._id === "" || this._id === 0)) {
-                    this.response(false, "Id connot be zero", null);
-                    return;
-                }
-                if (this._id) {
-                    isUpdate = true;
-                    await this._context.load(this._id);
-                    this.setProperties(isUpdate);
-                    await this._context.save(this._id);
-                    await this.afterSave(http, this._context);
-                    this.response(true, 'Record sucessfully updated.', this._context);
-
-                } else {
-                    this.setProperties(isUpdate);
-                    await this._context.save();
-                    await this.afterSave(http, this._context);
-                    this.response(true, 'Record successfully created.', this._context);
-                }
-                break;
-
-            case controller.action.LOAD:
-                comboData = await this.getCombos();
-                let checkRecord = new Query(`SELECT * FROM ${this.getTableName()}`);
-                checkRecord.where.add(new Expression(this._context._keyField, CompareOperator.Equals, this._id, DBType.int));
-                let obj = await checkRecord.execute();
-                if (obj.length > 0) {
-                    obj = obj[0];
-                    let record = {};
-                    record["Id"] = Number(obj[this._context._keyField]);
-                    this.response(true, "Record Loaded", { data: { ...obj, ...record }, combos: comboData });
-                } else {
-                    this.response(false, "Record not exists", { data: null, combos: comboData });
-                }
-                break;
-
-            case controller.action.DELETE:
-                this.handleDelete(this._id);
-                break;
-
-            case controller.action.LIST:
-            case controller.action.EXPORT:
-                let records = [];
-                let query = new Query(`SELECT * FROM ${this.getTableName()}`);
-                let recordCountQuery = new Query(`SELECT COUNT(${this._context._keyField}) AS RecordCount FROM ${this.getTableName()}`);
-                new Filter(this._filters, query).apply();
-                new Filter(this._filters, recordCountQuery).apply();
-                this.uiFilter && this.uiFilter(this._filters, query);
-                this.uiFilter && this.uiFilter(this._filters, recordCountQuery);
-                if (this._sort && this._dir) {
-                    query.orderBy = `${this._sort} ${this._dir}`;
-                }
-                comboData = await this.getCombos();
-                let extras = `LIMIT ${this._limit || 50} OFFSET ${this._start || 0}`;
-
-                if (this._listDataFromTable) {
-                    query.where.and(new Expression("IsDeleted", CompareOperator.Equals, false, DBType.boolean));
-                    recordCountQuery.where.and(new Expression("IsDeleted", CompareOperator.Equals, false, DBType.boolean));
-                }
-
-                if (this._userFilterEnable && !SecurityHelper.IsAdmin) {
-                    query.where.and(new Expression("CreatedByUserId", CompareOperator.Equals, HttpContext.UserId, DBType.int));
-                    recordCountQuery.where.and(new Expression("CreatedByUserId", CompareOperator.Equals, HttpContext.UserId, DBType.int));
-                }
-
-                if (this._start !== null && this._limit !== null) {
-                    query._extra = '';
-                    let recordCount = await recordCountQuery.execute();
-
-                    recordCount = recordCount[0].RecordCount;
-                    query._extra = extras;
-                    records = await query.execute();
-                    if (this._action.toUpperCase() !== controller.action.EXPORT) {
-                        this.response(true, null, {
-                            records: records,
-                            combos: comboData,
-                            recordCount: recordCount
-                        });
-                    }
-                } else {
-                    query._extra = '';
-                    records = await query.execute();
-                    if (this._action.toUpperCase() !== controller.action.EXPORT) {
-                        this.response(true, null, {
-                            records: records,
-                            combos: comboData,
-                            recordCount: records.length
-                        });
-                    }
-                }
-                //Export data
-                if (this._action.toUpperCase() === controller.action.EXPORT) {
-                    let type = !Utility.isNullOrEmpty(http.Params.type) ? http.Params.type.toUpperCase() : controller.exportType.EXCEL;
-                    this.dataExport(type, records);
-                }
-                break;
-
-            default:
-                this.response(false, messages.INVALID_ACTION, null);
-                break;
+            if (Utility.isMongoDB) {
+                this._context[controller.defaultProperties.MODIFIED_BY_USER_ID] = this.getUserId();
+            } else {
+                this._context[controller.defaultProperties.MODIFIED_BY_USER_ID].value = this.getUserId();
+            }
         }
     }
 
     async handleDelete(ids) {
         if (this._isHardDelete) {
-            await this._context.delete(ids);
+            if (Utility.isMongoDB) {
+                await Business[this.constructor.name].Model.deleteMany({ _id: { $in: ids.split(",") } })
+            } else {
+                await this._context.delete(ids);
+            }
         } else {
-            await this._context.softDelete(ids);
+            if (Utility.isMongoDB) {
+                await Business[this.constructor.name].Model.updateMany({ _id: { $in: ids.split(",") } }, { IsDeleted: true });
+            } else {
+                await this._context.softDelete(ids);
+            }
         }
         this.response(true, 'Record deleted');
     }
@@ -278,6 +224,210 @@ class ControllerBase extends IControllerBase {
             option[controller.responseKey.MESSAGE] = message;
 
         this._res.json(option);
+    }
+
+    //Action Handler
+    async save() {
+        let isUpdate = false;
+        let props = null;
+        await this.beforeSave(this.httpHelper);
+        if (this._id && (this._id === "" || this._id === 0)) {
+            this.response(false, "Id connot be zero", null);
+            return;
+        }
+
+        //update
+        if (this._id) {
+            isUpdate = true;
+            if (!Utility.isMongoDB) {
+                await this._context.load(this._id);
+            }
+            this.setProperties(isUpdate);
+            switch (Utility.AppSetting.dbType) {
+                case DB_SERVER_TYPE.MONGODB:
+                    props = this.filterMongoProperties;
+                    await Business[this.constructor.name].Model.update({ _id: this._id }, props);
+                    //await this._context.update({ _id: this._id });
+                    break;
+
+                case DB_SERVER_TYPE.MYSQL:
+                    await this._context.save(this._id);
+                    break;
+
+                case DB_SERVER_TYPE.MSSQL:
+                    //TODO: Implementation pending
+                    break;
+            }
+            await this.afterSave(this.httpHelper, this._context);
+            this.response(true, 'Record sucessfully updated.');
+
+        } else {
+            this.setProperties(isUpdate);
+            switch (Utility.AppSetting.dbType) {
+                case DB_SERVER_TYPE.MONGODB:
+                    props = this.filterMongoProperties;
+                    let ctx = new Business[this.constructor.name].Model(props);
+                    await ctx.save();
+                    break;
+
+                case DB_SERVER_TYPE.MYSQL:
+                    await this._context.save();
+                    break;
+
+                case DB_SERVER_TYPE.MSSQL:
+                    //TODO: Implementation pending
+                    break;
+            }
+            await this.afterSave(this.httpHelper, this._context);
+            this.response(true, 'Record successfully created.');
+        }
+    }
+
+    get filterMongoProperties() {
+        let keys = Object.keys(this._context);
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
+            if (this._context[key] && typeof (this._context[key]) == 'object' && this._context[key].type) {
+                this._context[key] = this._context[key] && this._context[key].hasOwnProperty('default') ? this._context[key].default : null;
+            }
+        }
+        return this._context;
+    }
+
+    async load() {
+        let comboData = {};//await this.getCombos();
+        if (Utility.isMongoDB) {
+            let record = await this.Model.find({ _id: this._id }).populate(this.populate);
+            record = record.length > 0 ? record[0] : null;
+            this.response(!!record, (!!record ? "Record Loaded" : "Record not exists"), { data: record._doc, combos: comboData });
+        } else {
+            let checkRecord = new Query(`SELECT * FROM ${this.getTableName()}`);
+            checkRecord.where.add(new Expression(this._context._keyField, CompareOperator.Equals, this._id, DBType.int));
+            let obj = await checkRecord.execute();
+            if (obj.length > 0) {
+                obj = obj[0];
+                let record = {};
+                record["Id"] = Number(obj[this._context._keyField]);
+                this.response(true, "Record Loaded", { data: { ...obj, ...record }, combos: comboData });
+            } else {
+                this.response(false, "Record not exists", { data: null, combos: comboData });
+            }
+        }
+    }
+
+    async delete() {
+        this.handleDelete(this._id);
+    }
+
+    async list(data) {
+        try {
+            let comboData = await this.getCombos();
+            if (data) {
+                return this.response(true, null, {
+                    records: data.records,
+                    combos: comboData,
+                    recordCount: data.count
+                });
+            }
+            let records = [];
+            if (Utility.isMongoDB) {
+                let aggregateOptions = [];
+                //Filters/Match
+                if (this._filters.length > 0) {
+                    //Prepare filters and pass to aggregate
+                    //aggregateOptions.push({});
+                }
+                //Join/Lookup
+                if (this.lookup) {
+                    aggregateOptions.push(this.lookup);
+                }
+                //Select/Projection
+                if (this.project) {
+                    aggregateOptions.push(this.project);
+                }
+                //Sorting
+                if (this._sort && this._dir) {
+                    options.push({ "$sort": { [this._sort]: this._dir.toLowerCase() == 'DESC' ? - 1 : 0 } });
+                }
+                aggregateOptions.push({
+                    "$facet": {
+                        records: [{ $skip: this._start || 0 }, { $limit: this._limit || 50 }],
+                        recordCount: [
+                            {
+                                $count: 'count'
+                            }
+                        ]
+                    }
+                });
+                let result = await this.Model.aggregate(aggregateOptions);
+                result = result[0];
+                this.response(true, null, {
+                    records: result.records,
+                    combos: comboData,
+                    recordCount: result.recordCount[0].count
+                });
+            } else {
+                // let query = new Query(`SELECT * FROM ${this.getTableName()}`);
+                // let recordCountQuery = new Query(`SELECT COUNT(${this._context._keyField}) AS RecordCount FROM ${this.getTableName()}`);
+                // new Filter(this._filters, query).apply();
+                // new Filter(this._filters, recordCountQuery).apply();
+                // this.uiFilter && this.uiFilter(this._filters, query);
+                // this.uiFilter && this.uiFilter(this._filters, recordCountQuery);
+                // if (this._sort && this._dir) {
+                //     query.orderBy = `${this._sort} ${this._dir}`;
+                // }
+                // let comboData = await this.getCombos();
+                // let extras = `LIMIT ${this._limit || 50} OFFSET ${this._start || 0}`;
+
+                // if (this._listDataFromTable) {
+                //     query.where.and(new Expression("IsDeleted", CompareOperator.Equals, false, DBType.boolean));
+                //     recordCountQuery.where.and(new Expression("IsDeleted", CompareOperator.Equals, false, DBType.boolean));
+                // }
+
+                // if (this._userFilterEnable && !SecurityHelper.IsAdmin) {
+                //     query.where.and(new Expression("CreatedByUserId", CompareOperator.Equals, HttpContext.UserId, DBType.int));
+                //     recordCountQuery.where.and(new Expression("CreatedByUserId", CompareOperator.Equals, HttpContext.UserId, DBType.int));
+                // }
+
+                // if (this._start !== null && this._limit !== null) {
+                //     query._extra = '';
+                //     let recordCount = await recordCountQuery.execute();
+
+                //     recordCount = recordCount[0].RecordCount;
+                //     query._extra = extras;
+                //     records = await query.execute();
+                //     if (this._action.toUpperCase() !== controller.action.EXPORT) {
+                //         this.response(true, null, {
+                //             records: records,
+                //             combos: comboData,
+                //             recordCount: recordCount
+                //         });
+                //     }
+                // } else {
+                //     query._extra = '';
+                //     records = await query.execute();
+                //     if (this._action.toUpperCase() !== controller.action.EXPORT) {
+                //         this.response(true, null, {
+                //             records: records,
+                //             combos: comboData,
+                //             recordCount: records.length
+                //         });
+                //     }
+                // }
+                // //Export data
+                // if (this._action.toUpperCase() === controller.action.EXPORT) {
+                //     let type = !Utility.isNullOrEmpty(this.httpHelper.Params.type) ? this.httpHelper.Params.type.toUpperCase() : controller.exportType.EXCEL;
+                //     this.dataExport(type, records);
+                // }
+            }
+        } catch (ex) {
+            Logger.Error(ex);
+            this.response(false, ex.message, {
+                records: [],
+                combos: [],
+                recordCount: 0
+            });
+        }
     }
 };
 

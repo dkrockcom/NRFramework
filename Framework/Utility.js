@@ -4,8 +4,12 @@ const cls = require('cls-hooked');
 const ns = cls.createNamespace("Request-Context-5195409c4e8d71bf5dd408342f5942bb");
 const path = require('path');
 const Logger = require('./Logger');
+const Enum = require('./DFEnum');
 
 class Utility {
+    static get isMongoDB() {
+        return this.AppSetting.dbType == Enum.DB_SERVER_TYPE.MONGODB;
+    }
     static get AppSetting() {
         let toReturn = {};
         if (fs.existsSync(path.resolve('AppSetting.json'))) {

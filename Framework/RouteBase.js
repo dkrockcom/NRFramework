@@ -43,10 +43,10 @@ class RouteBase {
                 routeRouteParams = this.getRouteRouteParams(obj._routeParams);
             }
 
-            if (Business[ctrl]) {
-                let businessObject = new Business[ctrl];
-                obj._context = businessObject;
-            }
+            // if (Business[ctrl]) {
+            //     let businessObject = new Business[ctrl];
+            //     obj._context = businessObject;
+            // }
 
             if (this.apiPrefix === '')
                 this.apiPrefix = null;

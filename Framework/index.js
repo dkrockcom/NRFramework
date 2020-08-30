@@ -30,6 +30,8 @@ const Task = require('./Task');
 const StartupBase = require('./StartupBase');
 const CacheModule = require('./Cache');
 const Security = require('./Security');
+const MongoConnection = require('./Database/MongoConnection');
+const Enum = require('./DFEnum');
 
 class Route extends RouteBase {
     constructor(app, routes) {
@@ -142,9 +144,14 @@ class Framework {
         server.listen(appPort, () => {
             Logger.Info("Application is running at localhost:" + appPort);
             Logger.Info("Application is started on: " + new Date());
-            if (config.autoDatabaseSetup) {
-                let dbSetup = new DatabaseSetup(config.dbConfig);
-                dbSetup.setup();
+            if (config.dbType == Enum.DB_SERVER_TYPE.MONGODB) {
+                MongoConnection.Connect();
+                MongoConnection.RegisterSchema();
+            } else {
+                if (config.autoDatabaseSetup) {
+                    let dbSetup = new DatabaseSetup(config.dbConfig);
+                    dbSetup.setup();
+                }
             }
             cb(app, server);
         });
