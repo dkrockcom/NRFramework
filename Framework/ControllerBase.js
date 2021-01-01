@@ -8,6 +8,7 @@ const path = require('path');
 const Utility = require("./Utility");
 const SecurityHelper = require("./Security/SecurityHelper");
 const { Excel, CSV, PDF } = require('./Export');
+const Logger = require('./Logger');
 
 class IControllerBase {
     async afterSave() { };
@@ -92,7 +93,7 @@ class ControllerBase extends IControllerBase {
     setProperties(isUpdate) {
         let businessProps = this._context.getProperties();
         businessProps.forEach(bp => {
-            if (this._params[bp]) {
+            if (!Utility.isNullOrEmpty(this._params[bp])) {
                 this._context[bp].value = this._params[bp];
             }
         });
@@ -115,109 +116,118 @@ class ControllerBase extends IControllerBase {
 
     async execute(http) {
         let comboData = {};
-        switch (this._action.toUpperCase()) {
-            case controller.action.SAVE:
-                let isUpdate = false;
-                await this.beforeSave(this.httpHelper);
-                if (this._id && (this._id === "" || this._id === 0)) {
-                    this.response(false, "Id connot be zero", null);
-                    return;
-                }
-                if (this._id) {
-                    isUpdate = true;
-                    await this._context.load(this._id);
-                    this.setProperties(isUpdate);
-                    await this._context.save(this._id);
-                    await this.afterSave(http, this._context);
-                    this.response(true, 'Record sucessfully updated.', this._context);
-
-                } else {
-                    this.setProperties(isUpdate);
-                    await this._context.save();
-                    await this.afterSave(http, this._context);
-                    this.response(true, 'Record successfully created.', this._context);
-                }
-                break;
-
-            case controller.action.LOAD:
-                comboData = await this.getCombos();
-                let checkRecord = new Query(`SELECT * FROM ${this.getTableName()}`);
-                checkRecord.where.add(new Expression(this._context._keyField, CompareOperator.Equals, this._id, DBType.int));
-                let obj = await checkRecord.execute();
-                if (obj.length > 0) {
-                    obj = obj[0];
-                    let record = {};
-                    record["Id"] = Number(obj[this._context._keyField]);
-                    this.response(true, "Record Loaded", { data: { ...obj, ...record }, combos: comboData });
-                } else {
-                    this.response(false, "Record not exists", { data: null, combos: comboData });
-                }
-                break;
-
-            case controller.action.DELETE:
-                this.handleDelete(this._id);
-                break;
-
-            case controller.action.LIST:
-            case controller.action.EXPORT:
-                let records = [];
-                let query = new Query(`SELECT * FROM ${this.getTableName()}`);
-                let recordCountQuery = new Query(`SELECT COUNT(${this._context._keyField}) AS RecordCount FROM ${this.getTableName()}`);
-                new Filter(this._filters, query).apply();
-                new Filter(this._filters, recordCountQuery).apply();
-                this.uiFilter && this.uiFilter(this._filters, query);
-                this.uiFilter && this.uiFilter(this._filters, recordCountQuery);
-                if (this._sort && this._dir) {
-                    query.orderBy = `${this._sort} ${this._dir}`;
-                }
-                comboData = await this.getCombos();
-                let extras = `LIMIT ${this._limit || 50} OFFSET ${this._start || 0}`;
-
-                if (this._listDataFromTable) {
-                    query.where.and(new Expression("IsDeleted", CompareOperator.Equals, false, DBType.boolean));
-                    recordCountQuery.where.and(new Expression("IsDeleted", CompareOperator.Equals, false, DBType.boolean));
-                }
-
-                if (this._userFilterEnable && !SecurityHelper.IsAdmin) {
-                    query.where.and(new Expression("CreatedByUserId", CompareOperator.Equals, HttpContext.UserId, DBType.int));
-                    recordCountQuery.where.and(new Expression("CreatedByUserId", CompareOperator.Equals, HttpContext.UserId, DBType.int));
-                }
-
-                if (this._start !== null && this._limit !== null) {
-                    query._extra = '';
-                    let recordCount = await recordCountQuery.execute();
-
-                    recordCount = recordCount[0].RecordCount;
-                    query._extra = extras;
-                    records = await query.execute();
-                    if (this._action.toUpperCase() !== controller.action.EXPORT) {
-                        this.response(true, null, {
-                            records: records,
-                            combos: comboData,
-                            recordCount: recordCount
-                        });
+        try {
+            switch (this._action.toUpperCase()) {
+                case controller.action.SAVE:
+                    let isUpdate = false;
+                    await this.beforeSave(this.httpHelper);
+                    if (this._id && (this._id === "" || this._id === 0)) {
+                        this.response(false, "Id connot be zero", null);
+                        return;
                     }
-                } else {
-                    query._extra = '';
-                    records = await query.execute();
-                    if (this._action.toUpperCase() !== controller.action.EXPORT) {
-                        this.response(true, null, {
-                            records: records,
-                            combos: comboData,
-                            recordCount: records.length
-                        });
-                    }
-                }
-                //Export data
-                if (this._action.toUpperCase() === controller.action.EXPORT) {
-                    let type = !Utility.isNullOrEmpty(http.Params.type) ? http.Params.type.toUpperCase() : controller.exportType.EXCEL;
-                    this.dataExport(type, records);
-                }
-                break;
+                    if (this._id) {
+                        isUpdate = true;
+                        await this._context.load(this._id);
+                        this.setProperties(isUpdate);
+                        await this._context.save(this._id);
+                        await this.afterSave(http, this._context);
+                        this.response(true, 'Record sucessfully updated.', this._context);
 
-            default:
-                this.response(false, messages.INVALID_ACTION, null);
-                break;
+                    } else {
+                        this.setProperties(isUpdate);
+                        await this._context.save();
+                        await this.afterSave(http, this._context);
+                        this.response(true, 'Record successfully created.', this._context);
+                    }
+                    break;
+
+                case controller.action.LOAD:
+                    comboData = await this.getCombos();
+                    let checkRecord = new Query(`SELECT * FROM ${this.getTableName()}`);
+                    checkRecord.where.add(new Expression(this._context._keyField, CompareOperator.Equals, this._id, DBType.int));
+                    let obj = await checkRecord.execute();
+                    if (obj.length > 0) {
+                        obj = obj[0];
+                        let record = {};
+                        record["Id"] = Number(obj[this._context._keyField]);
+                        this.response(true, "Record Loaded", { data: Object.assign({}, obj, record), combos: comboData });
+                    } else {
+                        this.response(false, "Record not exists", { data: null, combos: comboData });
+                    }
+                    break;
+
+                case controller.action.DELETE:
+                    this.handleDelete(this._id);
+                    break;
+
+                case controller.action.LIST:
+                case controller.action.EXPORT:
+                    let records = [];
+                    let cols = "*";
+                    if (http.Params.exportColumns && http.Params.exportColumns.length > 0) {
+                        cols = http.Params.exportColumns.join(", ");
+                    }
+                    let query = new Query(`SELECT ${cols} FROM ${this.getTableName()}`);
+                    let recordCountQuery = new Query(`SELECT COUNT(${this._context._keyField}) AS RecordCount FROM ${this.getTableName()}`);
+                    new Filter(this._filters, query).apply();
+                    new Filter(this._filters, recordCountQuery).apply();
+                    this.uiFilter && this.uiFilter(this._filters, query);
+                    this.uiFilter && this.uiFilter(this._filters, recordCountQuery);
+                    if (this._sort && this._dir) {
+                        query.orderBy = `${this._sort} ${this._dir}`;
+                    }
+                    comboData = await this.getCombos();
+                    let extras = `LIMIT ${this._limit || 50} OFFSET ${this._start || 0}`;
+
+                    if (this._listDataFromTable) {
+                        query.where.and(new Expression("IsDeleted", CompareOperator.Equals, false, DBType.boolean));
+                        recordCountQuery.where.and(new Expression("IsDeleted", CompareOperator.Equals, false, DBType.boolean));
+                    }
+
+                    if (this._userFilterEnable && !SecurityHelper.IsAdmin) {
+                        query.where.and(new Expression("CreatedByUserId", CompareOperator.Equals, HttpContext.UserId, DBType.int));
+                        recordCountQuery.where.and(new Expression("CreatedByUserId", CompareOperator.Equals, HttpContext.UserId, DBType.int));
+                    }
+
+                    if (this._start !== null && this._limit !== null) {
+                        query._extra = '';
+                        let recordCount = await recordCountQuery.execute();
+
+                        recordCount = recordCount[0].RecordCount;
+                        query._extra = extras;
+                        records = await query.execute();
+                        if (this._action.toUpperCase() !== controller.action.EXPORT) {
+                            this.response(true, null, {
+                                records: records,
+                                combos: comboData,
+                                recordCount: recordCount
+                            });
+                        }
+                    } else {
+                        query._extra = '';
+                        records = await query.execute();
+                        if (this._action.toUpperCase() !== controller.action.EXPORT) {
+                            this.response(true, null, {
+                                records: records,
+                                combos: comboData,
+                                recordCount: records.length
+                            });
+                        }
+                    }
+                    //Export data
+                    if (this._action.toUpperCase() === controller.action.EXPORT) {
+                        let type = !Utility.isNullOrEmpty(http.Params.type) ? http.Params.type.toUpperCase() : controller.exportType.EXCEL;
+                        this.dataExport(type, records);
+                    }
+                    break;
+
+                default:
+                    this.response(false, messages.INVALID_ACTION, null);
+                    break;
+            }
+        } catch (ex) {
+            this.response(false, ex.message, null);
+            Logger.Error(ex);
         }
     }
 

@@ -75,11 +75,11 @@ class Query {
                     if (Array.isArray(params._value)) {
                         let tempValue = [];
                         params._value.forEach(iv => {
-                            tempValue.push(DateTime.ToDate(iv, DateTime.Format.MySqlDate));
+                            tempValue.push(DateTime.ToFormat(iv, DateTime.Format.MySqlDateTime));
                         });
                         value = tempValue;
                     } else {
-                        value = params._value ? DateTime.ToDate(params._value, DateTime.Format.MySqlDate) : params._value;
+                        value = params._value ? DateTime.ToFormat(params._value, DateTime.Format.MySqlDateTime) : params._value;
                     }
                     break;
 
@@ -88,11 +88,11 @@ class Query {
                     if (Array.isArray(params._value)) {
                         let tempValue = [];
                         params._value.forEach(iv => {
-                            tempValue.push(JSON.parse(vi) ? 1 : 0);
+                            tempValue.push(Number.isInteger(iv) ? Number(vi || 0) : (JSON.parse(iv) ? 1 : 0));
                         });
                         value = tempValue;
                     } else {
-                        value = JSON.parse(params._value) ? 1 : 0;
+                        value = Number.isInteger(params._value) ? Number(params._value || 0) : (JSON.parse(params._value) ? 1 : 0);
                     }
                     break;
 

@@ -3,7 +3,7 @@ const moment = require('moment');
 class Format {
     static get Standard() { return 'MM/DD/YYYY hh:mm:ss a'; }
     static get DateOnly() { return 'MM/DD/YYYY'; }
-    static get MySqlDateTime() { return 'YYYY-MM-DD hh:mm:ss'; }
+    static get MySqlDateTime() { return 'YYYY-MM-DD HH:mm:ss'; }
     static get MySqlDate() { return 'YYYY-MM-DD'; }
     static get TimeOnlyAMPM() { return 'hh:mm:ss a'; }
     static get TimeOnlyFullHours() { return 'hh:mm:ss'; }

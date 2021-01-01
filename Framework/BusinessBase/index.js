@@ -29,7 +29,7 @@ class BusinessBase {
         if (id) {
             for (let index = 0; index < properties.length; index++) {
                 const prop = properties[index];
-                _query += `${index == 0 ? '' : ', '}${prop}=@${prop}`;
+                _query += `${index == 0 ? '' : ', '}` + "`" + prop + "`" + `=@${prop}`;
             }
             let checkRecord = new Query(`SELECT ${this._keyField} FROM ${this._tableName}`);
             checkRecord.where.add(new Expression(this._keyField, CompareOperator.Equals, id, DBType.int));
@@ -47,7 +47,7 @@ class BusinessBase {
             let _qField = '', _qValue = '';
             for (let index = 0; index < properties.length; index++) {
                 const prop = properties[index];
-                _qField += `${index == 0 ? '' : ', '}${prop}`;
+                _qField += `${index == 0 ? '' : ', '}` + "`" + prop + "`";
                 _qValue += `${index == 0 ? '' : ', '}@${prop}`;
             }
             let query = new Query(`INSERT INTO ${this._tableName} (${_qField}) VALUES (${_qValue})`);

@@ -7,6 +7,7 @@ class HttpHelper {
         this._response = res;
         this._next = next;
     }
+    get IsLocalhost() { return this._request.hostname == "localhost"; }
     get Request() { return this._request }
     get Response() { return this._response }
     get Next() { return this._next }

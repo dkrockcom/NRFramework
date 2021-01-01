@@ -1,44 +1,54 @@
 {
-	"version": "1.0.4",
-	"appName": "dkrock",
+	"version": "1.0.8",
+	"appName": "codehuntz",
 	"domain": "codehuntz.com",
-	"port": 5000,
-	"staticPath": "public",
+	"port": 80,
+	"staticPath": "Public",
 	"apiPrefix": "api",
 	"cors": true,
 	"dbType": "mysql",
 	"controllers": [],
 	"multerOptions": null,
-	"autoDatabaseSetup": true,
+	"autoDatabaseSetup": false,
 	"disableWeb": false,
+	"dbUseLowerCase": true,
+	"_dbConfig": {
+		"connectionLimit": 10,
+		"host": "178.128.182.155",
+		"user": "devesh",
+		"password": "DKrock143!$#",
+		"database": "codehuntz",
+		"multipleStatements": true,
+		"ssl": false,
+		"insecureAuth": true
+	},
 	"dbConfig": {
 		"connectionLimit": 10,
-		"host": "localhost",
+		"host": "127.0.0.1",
 		"user": "root",
-		"password": "123456",
-		"database": "framework",
-		"multipleStatements": true
+		"password": "admin",
+		"database": "codehuntz",
+		"multipleStatements": true,
+		"ssl": false,
+		"insecureAuth": true
 	},
 	"sessionTimeout": 86400,
 	"smtpConfig": {
-		"host": "",
+		"host": "codehuntz.com",
 		"port": 587,
 		"secure": false,
-		"username": "",
-		"password": ""
+		"username": "test@codehuntz.com",
+		"password": "123456"
 	},
-	"googleAuthConfig": {
-		"clientId": "803370434630-4rud03224e76id30lch382sbifrssgdh.apps.googleusercontent.com",
-		"secrate": "9PHbr64ctrOwWZKX6rfU3tk8",
-		"redirectUri": "http: //localhost:5000/api/google",
-		"appRedirect": "/",
-		"authFailedRedirect": "/Login?error=User not registered"
+	"twilio": {
+		"accountId": "",
+		"token": ""
 	},
 	"sso": {
 		"google": {
 			"clientId": "803370434630-4rud03224e76id30lch382sbifrssgdh.apps.googleusercontent.com",
 			"secrate": "9PHbr64ctrOwWZKX6rfU3tk8",
-			"redirectUri": "http: //localhost:5000/api/google",
+			"redirectUri": "https://www.codehuntz.com/api/google",
 			"appRedirect": "/",
 			"authFailedRedirect": "/Login?error=User not registered"
 		},

@@ -24,7 +24,10 @@ class StartupBase {
     async onInitialize(app, server) {
         CacheModule.SecurityCache();
         await this.Configure(app, server);
-        Framework.Task.TaskManager.Initialize();
+
+        const { TaskManager, DefaultTask } = Framework.Task;
+        TaskManager.Add(new DefaultTask.Notification(), '*/30 * * * * *', "NotificationTask");
+        TaskManager.Initialize();
     }
 
     async onExceptionLog(exception) {

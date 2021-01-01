@@ -30,6 +30,7 @@ const Task = require('./Task');
 const StartupBase = require('./StartupBase');
 const CacheModule = require('./Cache');
 const Security = require('./Security');
+const Notification = require('./Notification');
 
 class Route extends RouteBase {
     constructor(app, routes) {
@@ -67,6 +68,7 @@ class Framework {
     static get Utility() { return Utility };
     static get BusinessBase() { return BusinessBase };
     static get Security() { return Security };
+    static get Notification() { return Notification };
     static StartApp(program) {
         return new program();
     }

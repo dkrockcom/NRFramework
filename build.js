@@ -4,7 +4,7 @@ const execSync = require("child_process").execSync;
 const { BuildBase, Version } = require('./Framework/Helper');
 
 class Build extends BuildBase {
-    static Run() {
+    static async Run() {
         Version.Upgrade();
         if (!fs.existsSync(this.BuildPath)) {
             this.Log('Creating Build Directory');

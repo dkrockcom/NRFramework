@@ -7,7 +7,10 @@ const Logger = require('./../Logger');
 
 
 class ChangePassword extends ReadOnlyControllerBase {
-    _isAuthEnabled = true;
+    constructor() {
+        super();
+        this._isAuthEnabled = true;
+    }
 
     async execute(http) {
         try {

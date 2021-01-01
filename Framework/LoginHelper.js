@@ -8,6 +8,7 @@ class LoginArgs {
         this.Username = null;
         this.Password = null;
         this.Email = null;
+        this.Mobile = null;
     }
 }
 

@@ -4,7 +4,8 @@ const minify = require('@node-minify/core');
 const gcc = require('@node-minify/google-closure-compiler');
 
 class BuildBase {
-    static ErrorFiles = [];
+    static set ErrorFiles(val) { this._ErrorFiles = val; }
+    static get ErrorFiles() { return this._ErrorFiles || []; }
     static get BuildPath() { return path.resolve("Build") }
     static get DashboardPath() { return path.resolve("Dashboard") }
     static get DashboardBuildPath() { return path.resolve("Dashboard/build") }
@@ -65,9 +66,7 @@ class BuildBase {
     };
 
     static Log(message) {
-        console.log('----------------------------------------------------------------------------------------------');
         console.log(message);
-        console.log('----------------------------------------------------------------------------------------------');
     }
 
     static async EncryptFramework() {

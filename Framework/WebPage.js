@@ -2,14 +2,12 @@ const HttpContext = require('./HttpContext');
 const HttpHelper = require('./Helper/HttpHelper');
 
 class WebPage {
-
-    _routeParams = [];
-    route = "";
-    httpHelper = null;
-    data = {};
-
     constructor() {
         this.pageLoad = this.pageLoad.bind(this);
+        this._routeParams = [];
+        this.route = "";
+        this.httpHelper = null;
+        this.data = {};
     }
 
     async init(req, res, next) {

@@ -7,9 +7,11 @@ const { controller, messages } = require('./DFEnum');
 
 class ReadOnlyControllerBase {
 
-    httpHelper = null;
-    _isAuthEnabled = true;
-    _routeParams = [];
+    constructor() {
+        this.httpHelper = null;
+        this._isAuthEnabled = true;
+        this._routeParams = [];
+    }
 
     async init(req, res, next) {
         this.httpHelper = new HttpHelper(req, res, next);

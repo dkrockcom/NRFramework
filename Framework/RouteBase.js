@@ -1,3 +1,5 @@
+const AppSetting = require("./Utility").AppSetting;
+
 const ignoreList = [
     'setRoute',
     '_express',
@@ -30,6 +32,10 @@ class RouteBase {
     }
 
     setRoute(ctrl, index) {
+        console.log(ctrl);
+        if (!AppSetting.sso && ctrl == "Google") {
+            return;
+        }
         const Business = require('../Business');
         if (ignoreList.findIndex(e => e == ctrl) == -1) {
             let obj = this[ctrl];
